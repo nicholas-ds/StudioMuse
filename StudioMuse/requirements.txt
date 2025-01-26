@@ -1,0 +1,6 @@
+flask==3.0.0
+requests==2.31.0
+python-dotenv==1.0.0
+pytest==7.4.3
+gimpfu==2.0  # For GIMP plugin development
+typing-extensions==4.9.0  # For type hints 
