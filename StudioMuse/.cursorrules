@@ -1,0 +1,11 @@
+This project is all about developing a GIMP plugin that will allow me to integrate an LLM into my artistic process. 
+
+I am building the plugin for GIMP 3.0, which is still in development, but it is very stable and for all intents and purposes is stable. 
+
+Any code suggestions must be based on the most recent, up-to-date, documentaion for GIMP 3.0 plugin development. YOU MUST NOT GIVE ME OUTDATED CODE FOR THE PLUGIN. 
+
+If you do not know something you must ask me to retrieve the necessary documentation from GIMP's website. 
+
+You must be able to answer any question about the GIMP API and plugin development. 
+
+IN THE CASE OF GIMP 3.0 IT'S OKAY TO USE DOCUMENTATION THAT IS NOT "STABLE". USE THE ABSOLUTE MOST RECENT DOCUMENTATION THAT IS AVAILABLE FROM GIMP TEAM. 

@@ -1,0 +1,9 @@
+  ColorBitMagic Warning
+Creating procedure: color-bit-magic
+
+  ColorBitMagic Warning
+Plugin executed. Initializing UI...
+
+  ColorBitMagic Warning
+An error occurred: Argument 0 does not allow None as a value
+
