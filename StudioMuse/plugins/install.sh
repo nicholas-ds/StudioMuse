@@ -1,42 +1,19 @@
 #!/bin/bash
 
-# Detect OS and set GIMP plugin directory
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    PLUGIN_DIR="$HOME/Library/Application Support/GIMP/2.10/plug-ins"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Linux
-    PLUGIN_DIR="$HOME/.gimp-2.10/plug-ins"
-else
-    # Windows (when running in Git Bash or similar)
-    PLUGIN_DIR="$APPDATA/GIMP/2.10/plug-ins"
-fi
+# Define GIMP plugin directory for macOS
+GIMP_PLUGIN_DIR="$HOME/Library/Application Support/GIMP/3.0/plug-ins"
 
-# Create plugin directory if it doesn't exist
-mkdir -p "$PLUGIN_DIR"
+# Remove any existing plugin installation
+rm -rf "$GIMP_PLUGIN_DIR/colorBitMagic"
 
-# Copy the plugin
-cp "colorBitMagic/plugin.py" "$PLUGIN_DIR/colorBitMagic.py"
-chmod +x "$PLUGIN_DIR/colorBitMagic.py"
+# Create plugin directory
+mkdir -p "$GIMP_PLUGIN_DIR/colorBitMagic"
 
-echo "Plugin installed to: $PLUGIN_DIR"
+# Copy plugin files
+cp "$(dirname "$0")/colorBitMagic/colorBitMagic.py" "$GIMP_PLUGIN_DIR/colorBitMagic/"
 
-# Check if GIMP is running and close it
-if pgrep -x "gimp" > /dev/null; then
-    echo "Closing GIMP..."
-    pkill gimp
-    sleep 2 # Wait for GIMP to fully close
-fi
+# Make the plugin executable
+chmod +x "$GIMP_PLUGIN_DIR/colorBitMagic/colorBitMagic.py"
 
-# Restart GIMP
-echo "Reopening GIMP..."
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    open -a GIMP
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    gimp &
-else
-    # For Windows, replace this with a valid command to restart GIMP
-    start "" "C:/Program Files/GIMP 2/bin/gimp-2.10.exe"
-fi
-
-echo "Please wait for GIMP to restart and test the plugin under Filters > ColorBitMagic."
+echo "Plugin installed successfully to: $GIMP_PLUGIN_DIR/colorBitMagic"
+echo "Please restart GIMP for the changes to take effect."
