@@ -31,8 +31,8 @@ def show_color_bit_magic_dialog():
     # Connect signals if any
     builder.connect_signals({
         "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked,
-        "on_exit_clicked": on_exit_clicked,
-        "on_delete_event": Gtk.main_quit  # Connect the delete event to Gtk.main_quit
+        "on_exit_clicked": Gtk.main_quit,
+        "on_delete_event": Gtk.main_quit
     })
 
     # Show the dialog
@@ -47,3 +47,32 @@ def on_palette_demystifyer_clicked(button):
 def on_exit_clicked(button):
     Gimp.message("Exit button clicked!")
     Gtk.main_quit()  # Quit the GTK main loop when the exit button is clicked
+
+def show_dm_main_dialog():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    xml_path = os.path.join(script_dir, "templates/dmMain.xml")
+    Gimp.message(f"Loading dmMain UI file from: {xml_path}")
+
+    builder = Gtk.Builder()
+    try:
+        builder.add_from_file(xml_path)
+        Gimp.message("dmMain UI file loaded successfully.")
+    except Exception as e:
+        Gimp.message(f"Error loading dmMain UI file: {e}")
+        return
+
+    # Get the main window using the updated ID
+    dialog = builder.get_object("dmMainWindow")
+    if dialog is None:
+        Gimp.message("Error: Could not find dmMainWindow in the XML file. Check the ID.")
+        return
+
+    Gimp.message("dmMainWindow found, displaying dialog.")
+    dialog.show_all()
+
+def on_palette_demystifyer_clicked(button):
+    Gimp.message("Palette Demystifyer button clicked. Opening dmMain dialog...")
+    try:
+        show_dm_main_dialog()
+    except Exception as e:
+        Gimp.message(f"Error while opening dmMain dialog: {e}")

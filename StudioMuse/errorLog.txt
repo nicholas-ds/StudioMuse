@@ -8,8 +8,11 @@ Initializing UI...
 Loading UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/homeDialog.xml
 
   ColorBitMagic Warning
-Dialog created successfully, waiting for user input...
+Palette Demystifyer button clicked. Opening dmMain dialog...
 
   ColorBitMagic Warning
-An error occurred: 'Window' object has no attribute 'run'
+Loading dmMain UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/dmMain.xml
+
+  ColorBitMagic Warning
+Error: Could not find GtkApplicationWindow in the XML file.
 
