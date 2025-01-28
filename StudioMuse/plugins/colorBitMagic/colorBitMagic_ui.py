@@ -1,4 +1,5 @@
 import gi
+import os
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
@@ -9,42 +10,40 @@ def greet_from_ui():
 def show_color_bit_magic_dialog():
     Gimp.message("Initializing UI...")
 
-    # Create a dialog box
-    dialog = Gtk.Dialog(title="ColorBitMagic", transient_for=None, flags=0)
-    dialog.set_default_size(400, 300)
+    # Determine the directory of the current script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    xml_path = os.path.join(script_dir, "templates/homeDialog.xml")
+    Gimp.message(f"Loading UI file from: {xml_path}")
 
-    # Add instructions label
-    label = Gtk.Label(label="Select a palette to match:")
-    label.set_margin_top(20)  # Add 20px padding at the top
-    label.set_margin_bottom(10)  # Add 10px padding below the label
-    label.set_margin_start(10)  # Add 10px padding on the left
-    label.set_margin_end(10)  # Add 10px padding on the right
-    dialog.get_content_area().add(label)
-    label.show()
+    builder = Gtk.Builder()
+    try:
+        builder.add_from_file(xml_path)
+    except Exception as e:
+        Gimp.message(f"Error loading UI file: {e}")
+        return
 
-    # Create dropdown and populate with palette names
-    combo_box = Gtk.ComboBoxText()
-    palette_list = Gimp.palettes_get_list("")  # Retrieve palettes
-    for palette in palette_list:
-        combo_box.append_text(palette.get_name())  # Add palette names to dropdown
+    # Get the main window from the builder
+    dialog = builder.get_object("GtkWindow")
+    if dialog is None:
+        Gimp.message("Error: Could not find GtkWindow in the XML file.")
+        return
 
-    dialog.get_content_area().add(combo_box)
-    combo_box.show()
+    # Connect signals if any
+    builder.connect_signals({
+        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked,
+        "on_exit_clicked": on_exit_clicked,
+        "on_delete_event": Gtk.main_quit  # Connect the delete event to Gtk.main_quit
+    })
 
-    # Add dialog buttons
-    dialog.add_button("_OK", Gtk.ResponseType.OK)
-    dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
+    # Show the dialog
+    dialog.show_all()
 
-    # Run the dialog and handle user interaction
-    Gimp.message("Dialog created successfully, waiting for user input...")
-    response = dialog.run()
-    selected_palette = combo_box.get_active_text()  # Get selected palette
-    dialog.destroy()
+    # Start the GTK main loop
+    Gtk.main()
 
-    if response == Gtk.ResponseType.OK:
-        if selected_palette:
-            Gimp.message(f"Selected Palette: {selected_palette}")
-        else:
-            Gimp.message("No palette selected.")
-    elif response == Gtk.ResponseType.CANCEL:
-        Gimp.message("Operation canceled.")
+def on_palette_demystifyer_clicked(button):
+    Gimp.message("Palette Demystifyer button clicked!")
+
+def on_exit_clicked(button):
+    Gimp.message("Exit button clicked!")
+    Gtk.main_quit()  # Quit the GTK main loop when the exit button is clicked
