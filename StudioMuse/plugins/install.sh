@@ -39,11 +39,8 @@ fi
 # Remove any existing plugin installation
 rm -rf "$GIMP_PLUGIN_DIR/colorBitMagic"
 
-# Create plugin directory
-mkdir -p "$GIMP_PLUGIN_DIR/colorBitMagic"
-
-# Copy plugin files
-cp "$(dirname "$0")/colorBitMagic/colorBitMagic.py" "$GIMP_PLUGIN_DIR/colorBitMagic/"
+# Copy the entire plugin directory
+cp -r "$(dirname "$0")/colorBitMagic" "$GIMP_PLUGIN_DIR/"
 
 # Make the plugin executable
 chmod +x "$GIMP_PLUGIN_DIR/colorBitMagic/colorBitMagic.py"
