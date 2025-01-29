@@ -1,0 +1,21 @@
+NickSmay@Leilas-Air StudioMuse % tree 
+.
+├── Gimp3Plugindocumentation.txt
+├── ProjectOverview.md
+├── README.md
+├── assets
+├── backend
+├── docs.text
+├── gimp_api_documentation.txt
+├── plugins
+│   ├── colorBitMagic
+│   │   ├── __init__.py
+│   │   ├── colorBitMagic.py
+│   │   ├── colorBitMagic_ui.py
+│   │   ├── colorBitMagic_utils.py
+│   │   └── templates
+│   │       └── homeDialog.xml
+│   └── install.sh
+├── requirements.txt
+└── scripts
+

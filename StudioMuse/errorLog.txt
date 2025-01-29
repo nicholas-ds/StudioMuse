@@ -1,0 +1,18 @@
+  ColorBitMagic Warning
+Creating procedure: color-bit-magic
+
+  ColorBitMagic Warning
+Initializing UI...
+
+  ColorBitMagic Warning
+Loading UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/homeDialog.xml
+
+  ColorBitMagic Warning
+Palette Demystifyer button clicked. Opening dmMain dialog...
+
+  ColorBitMagic Warning
+Loading dmMain UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/dmMain.xml
+
+  ColorBitMagic Warning
+Error: Could not find GtkApplicationWindow in the XML file.
+
