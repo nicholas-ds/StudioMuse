@@ -72,9 +72,9 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBox">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
+                              <object class="GtkComboBoxText" id="paletteDropdown">
+                                  <property name="visible">True</property>
+                                  <property name="can-focus">True</property>
                               </object>
                               <packing>
                                 <property name="resize">True</property>
