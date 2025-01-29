@@ -8,10 +8,7 @@ Initializing UI...
 Loading UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/homeDialog.xml
 
   ColorBitMagic Warning
-Starting to populate palette dropdown...
-
-  ColorBitMagic Warning
-Error: Could not find 'paletteDropdown' in the UI.
+Error: Could not find 'paletteDropdown' in the UI. Check XML IDs.
 
   ColorBitMagic Warning
 Palette Demystifyer button clicked. Opening dmMain dialog...
@@ -23,14 +20,5 @@ Loading dmMain UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.
 dmMain UI file loaded successfully.
 
   ColorBitMagic Warning
-Starting to populate palette dropdown...
-
-  ColorBitMagic Warning
-Retrieved 42 palettes.
-
-  ColorBitMagic Warning
-Error in populate_palette_dropdown: Must be string, not Palette
-
-  ColorBitMagic Warning
-dmMainWindow found, displaying dialog.
+Error while opening dmMain dialog: name 'Gtk' is not defined
 

@@ -3,6 +3,7 @@ import os
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
+from colorBitMagic_utils import populate_palette_dropdown
 
 # Global variable to keep track of the dmMain dialog
 dm_main_dialog = None
