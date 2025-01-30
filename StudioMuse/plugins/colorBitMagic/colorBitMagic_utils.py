@@ -62,7 +62,7 @@ def log_palette_colormap(builder):
 
         Gimp.message(f"User selected palette: '{selected_palette_name}'")
 
-        # Get the list of palettes (now handling it correctly)
+        # Get the list of palettes
         palette_objects = Gimp.palettes_get_list("")
         if not palette_objects:
             Gimp.message("No palettes found in GIMP.")
@@ -83,20 +83,26 @@ def log_palette_colormap(builder):
 
         # Get colors
         colors = palette.get_colors()
+        Gimp.message(f"Colors retrieved: {colors}")  # Debug message to check the colors list
+
         if not colors:
             Gimp.message(f"No colors found in palette '{palette.get_name()}'.")
             return
 
         Gimp.message(f"Logging colors for palette '{palette.get_name()}':")
-        for color in colors:
+        for index, color in enumerate(colors):
+            Gimp.message(f"Processing color at index {index}: {color}")
+
+            if isinstance(color, list):
+                Gimp.message(f"Found a list instead of a Gegl.Color at index {index}: {color}")
+                continue
+
             if isinstance(color, Gegl.Color):  # Ensure it's a Gegl.Color object
                 rgba = color.get_rgba()  # Get RGBA values
                 Gimp.message(f"Color: R={rgba[0]:.3f}, G={rgba[1]:.3f}, B={rgba[2]:.3f}, A={rgba[3]:.3f}")
             else:
-                Gimp.message(f"Unexpected color type: {type(color)}")
+                Gimp.message(f"Unexpected color type at index {index}: {type(color)}. Skipping this color.")
 
-        # Free memory
-        Gimp.color_array_free(colors)
 
         Gimp.message("log_palette_colormap() completed successfully.")
 

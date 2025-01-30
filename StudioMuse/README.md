@@ -9,8 +9,8 @@ StudioMuse is a GIMP plugin-based application designed to enhance artistic workf
 ### Features
 
 - **colorBitMagic Plugin**: 
-  - Extracts RGB and CMYK color data from selected areas in GIMP.
-  - Interfaces with the Claude LLM API to provide color matching and art tips.
+  - Extracts color data from user created palettes.
+  - Sends color data to the Claude LLM API for color matching and art tips.
   - Integrates with GIMP's palette editor for enhanced user interaction.
 
 ### Technical Requirements
@@ -22,7 +22,7 @@ StudioMuse is a GIMP plugin-based application designed to enhance artistic workf
 
 1. Ensure GIMP 3.x is installed.
 2. Clone the repository.
-3. Navigate to the `plugins/colorBitMagic` directory and run the installation script.
+3. Navigate to the `plugins/colorBitMagic/plugins` directory and run the installation script.
 
 ### Usage
 

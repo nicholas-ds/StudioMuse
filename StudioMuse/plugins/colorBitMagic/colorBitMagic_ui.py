@@ -96,11 +96,21 @@ def on_dm_main_dialog_close(*args):
     Gtk.main_quit()
 
 def on_submit_clicked(button, builder):
-    Gimp.message("Submit button clicked. Logging palette colors...")
+    Gimp.message("Submit button clicked. Logging palette colors and entry text...")
     try:
-        log_palette_colormap(builder)  # Now builder is correctly passed
+        # Log palette colors
+        log_palette_colormap(builder)  # Assuming this function logs the palette colors
+
+        # Retrieve the GtkEntry widget
+        entry = builder.get_object("physicalPaletteEntry")  # Use the ID from the XML
+        if entry is not None:
+            entry_text = entry.get_text()
+            Gimp.message(f"Entry text: {entry_text}")
+        else:
+            Gimp.message("Error: Could not find GtkEntry in the UI. Check XML IDs.")
+
     except Exception as e:
-        Gimp.message(f"Error while logging palette colors: {e}")
+        Gimp.message(f"Error while logging palette colors and entry text: {e}")
 
 def populate_palette_dropdown(builder):
     Gimp.message("Starting to populate palette dropdown...")
