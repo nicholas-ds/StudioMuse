@@ -3,7 +3,7 @@ import os
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
-from colorBitMagic_utils import populate_palette_dropdown
+from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap
 
 # Global variable to keep track of the dmMain dialog
 dm_main_dialog = None
@@ -60,16 +60,8 @@ def on_exit_clicked(button):
     Gtk.main_quit()  # Quit the GTK main loop when the exit button is clicked
 
 def show_dm_main_dialog():
-    global dm_main_dialog
-
-    # Check if the dialog is already open
-    if dm_main_dialog is not None:
-        Gimp.message("dmMain dialog is already open.")
-        return
-
     script_dir = os.path.dirname(os.path.abspath(__file__))
     xml_path = os.path.join(script_dir, "templates/dmMain.xml")
-    Gimp.message(f"Loading dmMain UI file from: {xml_path}")
 
     builder = Gtk.Builder()
     try:
@@ -79,20 +71,18 @@ def show_dm_main_dialog():
         Gimp.message(f"Error loading dmMain UI file: {e}")
         return
 
-    # Get the main window using the updated ID
     dm_main_dialog = builder.get_object("dmMainWindow")
     if dm_main_dialog is None:
         Gimp.message("Error: Could not find dmMainWindow in the XML file. Check the ID.")
         return
 
-    # Connect signals for the dmMain dialog
+    # Pass builder to handlers that need it
     builder.connect_signals({
-        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked,
-        "on_exit_clicked": on_dm_main_dialog_close,  # Updated to handle dialog close
-        "on_delete_event": on_dm_main_dialog_close   # Updated to handle dialog close
-    })
+    "on_submit_clicked": lambda button: on_submit_clicked(button, builder),
+    "on_exit_clicked": lambda button: on_dm_main_dialog_close(dm_main_dialog),
+    "on_delete_event": lambda *args: on_dm_main_dialog_close(dm_main_dialog)
+})
 
-    # Populate the palette dropdown
     populate_palette_dropdown(builder)
 
     Gimp.message("dmMainWindow found, displaying dialog.")
@@ -104,6 +94,13 @@ def on_dm_main_dialog_close(*args):
     dm_main_dialog.destroy()
     dm_main_dialog = None
     Gtk.main_quit()
+
+def on_submit_clicked(button, builder):
+    Gimp.message("Submit button clicked. Logging palette colors...")
+    try:
+        log_palette_colormap(builder)  # Now builder is correctly passed
+    except Exception as e:
+        Gimp.message(f"Error while logging palette colors: {e}")
 
 def populate_palette_dropdown(builder):
     Gimp.message("Starting to populate palette dropdown...")
