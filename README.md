@@ -2,21 +2,25 @@
 
 ## Overview
 
-StudioMuse is a GIMP plugin-based application designed to enhance artistic workflows by integrating advanced color analysis and recommendation features. The primary plugin, **colorBitMagic**, assists artists in matching colors from reference images to their personal palettes, such as Mont Marte's 52 Extra Soft Vibrant oil pastels.
+StudioMuse is a GIMP plugin-based application designed to enhance artistic workflows by integrating advanced color analysis and AI features. The primary plugin, **colorBitMagic**, assists artists in matching colors from reference images to their personal palettes, such as a particular set of oil pastels or a specific set of watercolor paints.
+
+The integrated llm also gives advice and insights into how to use the colors in your physical palette. Perplexity Sonar is used for this as their sonar model 
+has built in web search functionality that will be important for identifying particular physical palettees. 
+
 
 ## Current Development
 
 ### Features
 
 - **colorBitMagic Plugin**: 
-  - Extracts color data from user created palettes.
-  - Sends color data to the Claude LLM API for color matching and art tips.
+  - Extracts color data from user-created palettes.
+  - Sends color data to the Perplexity Sonar API for color matching and art tips.
   - Integrates with GIMP's palette editor for enhanced user interaction.
 
 ### Technical Requirements
 
 - **Platform**: GIMP 3.x
-- **Backend**: Python, Claude LLM API
+- **Backend**: Python, Perplexity Sonar API
 
 ### Installation
 
@@ -28,7 +32,7 @@ StudioMuse is a GIMP plugin-based application designed to enhance artistic workf
 
 1. Open a reference photo in GIMP.
 2. Use GIMP tools to select image areas and extract color data.
-3. Send data to the Claude LLM API for color matching and art tips.
+3. Send data to the Perplexity Sonar API for color matching and art tips.
 4. View recommendations and interact with GIMP's palette editor.
 
 ## Future Development
