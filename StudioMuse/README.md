@@ -4,9 +4,7 @@
 
 StudioMuse is a GIMP plugin-based application designed to enhance artistic workflows by integrating advanced color analysis and AI features. The primary plugin, **colorBitMagic**, assists artists in matching colors from reference images to their personal palettes, such as a particular set of oil pastels or a specific set of watercolor paints.
 
-The integrated llm also gives advice and insights into how to use the colors in your physical palette. Perplexity Sonar is used for this as their sonar model 
-has built in web search functionality that will be important for identifying particular physical palettees. 
-
+The integrated LLM also gives advice and insights into how to use the colors in your physical palette. Perplexity Sonar is used for this as their sonar model has built-in web search functionality that will be important for identifying particular physical palettes.
 
 ## Current Development
 
@@ -27,6 +25,11 @@ has built in web search functionality that will be important for identifying par
 1. Ensure GIMP 3.x is installed.
 2. Clone the repository.
 3. Navigate to the `plugins/colorBitMagic/plugins` directory and run the installation script.
+4. Set the `PERPLEXITY_KEY` environment variable with your API key.
+5. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ### Usage
 
