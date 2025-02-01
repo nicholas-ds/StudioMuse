@@ -8,11 +8,122 @@ Initializing UI...
 Loading UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/homeDialog.xml
 
   ColorBitMagic Warning
+Starting to populate palette dropdown...
+
+  ColorBitMagic Warning
+Error: Could not find 'paletteDropdown' in the UI. Check XML IDs.
+
+  ColorBitMagic Warning
 Palette Demystifyer button clicked. Opening dmMain dialog...
 
   ColorBitMagic Warning
-Loading dmMain UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/dmMain.xml
+dmMain UI file loaded successfully.
 
   ColorBitMagic Warning
-Error: Could not find GtkApplicationWindow in the XML file.
+Starting to populate palette dropdown...
+
+  ColorBitMagic Warning
+Retrieved 42 palettes.
+
+  ColorBitMagic Warning
+Palette dropdown populated successfully.
+
+  ColorBitMagic Warning
+dmMainWindow found, displaying dialog.
+
+  ColorBitMagic Warning
+Submit button clicked. Logging palette colors and entry text...
+
+  ColorBitMagic Warning
+Starting log_palette_colormap()...
+
+  ColorBitMagic Warning
+User selected palette: 'SunRa Orb'
+
+  ColorBitMagic Warning
+Available palette names: ['color history', 'sunra orb', 'bears', 'bgold', 'blues', 'borders', 'browns and yellows', 'caramel', 'cascade', 'china', 'coldfire', 'cool colors', 'cranes', 'dark pastels', 'default', 'ega', 'firecode', 'gold', 'grayviolet', 'grayblue', 'grays', 'greens', 'hilite', 'khaki', 'lights', 'muted', 'named colors', 'news3', 'op2', 'paintjet', 'pastels', 'plasma', 'reds', 'reds and purples', 'royal', 'tango icon theme', 'topographic', 'visibone', 'visibone 2', 'volcano', 'warm colors', 'web']
+
+  ColorBitMagic Warning
+Colors retrieved: [<Gegl.Color object at 0x10639ac40 (GeglColor at 0x11a138960)>, <Gegl.Color object at 0x10639ae40 (GeglColor at 0x11a1b7b60)>, <Gegl.Color object at 0x10639b580 (GeglColor at 0x11a1ee4e0)>, <Gegl.Color object at 0x10639b540 (GeglColor at 0x11a1ee540)>, <Gegl.Color object at 0x10639b5c0 (GeglColor at 0x11a152bf0)>, <Gegl.Color object at 0x10639b600 (GeglColor at 0x11a152c50)>, <Gegl.Color object at 0x10639b640 (GeglColor at 0x11a137110)>, <Gegl.Color object at 0x10639b680 (GeglColor at 0x11a137170)>, <Gegl.Color object at 0x10639b6c0 (GeglColor at 0x11a159ff0)>, <Gegl.Color object at 0x10639b700 (GeglColor at 0x11a15a050)>, <Gegl.Color object at 0x10639b740 (GeglColor at 0x11a142640)>, <Gegl.Color object at 0x10639b780 (GeglColor at 0x11a1426a0)>]
+
+  ColorBitMagic Warning
+Logging colors for palette 'SunRa Orb':
+
+  ColorBitMagic Warning
+Processing color at index 0: <Gegl.Color object at 0x10639ac40 (GeglColor at 0x11a138960)>
+
+  ColorBitMagic Warning
+Color: R=0.074, G=0.287, B=0.429, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 1: <Gegl.Color object at 0x10639ae40 (GeglColor at 0x11a1b7b60)>
+
+  ColorBitMagic Warning
+Color: R=0.275, G=0.445, B=0.456, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 2: <Gegl.Color object at 0x10639b580 (GeglColor at 0x11a1ee4e0)>
+
+  ColorBitMagic Warning
+Color: R=0.761, G=0.753, B=0.546, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 3: <Gegl.Color object at 0x10639b540 (GeglColor at 0x11a1ee540)>
+
+  ColorBitMagic Warning
+Color: R=0.839, G=0.831, B=0.716, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 4: <Gegl.Color object at 0x10639b5c0 (GeglColor at 0x11a152bf0)>
+
+  ColorBitMagic Warning
+Color: R=0.610, G=0.672, B=0.527, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 5: <Gegl.Color object at 0x10639b600 (GeglColor at 0x11a152c50)>
+
+  ColorBitMagic Warning
+Color: R=0.283, G=0.238, B=0.109, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 6: <Gegl.Color object at 0x10639b640 (GeglColor at 0x11a137110)>
+
+  ColorBitMagic Warning
+Color: R=0.672, G=0.631, B=0.356, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 7: <Gegl.Color object at 0x10639b680 (GeglColor at 0x11a137170)>
+
+  ColorBitMagic Warning
+Color: R=0.209, G=0.491, B=0.672, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 8: <Gegl.Color object at 0x10639b6c0 (GeglColor at 0x11a159ff0)>
+
+  ColorBitMagic Warning
+Color: R=0.006, G=0.105, B=0.184, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 9: <Gegl.Color object at 0x10639b700 (GeglColor at 0x11a15a050)>
+
+  ColorBitMagic Warning
+Color: R=0.107, G=0.434, B=0.680, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 10: <Gegl.Color object at 0x10639b740 (GeglColor at 0x11a142640)>
+
+  ColorBitMagic Warning
+Color: R=0.002, G=0.060, B=0.117, A=1.000
+
+  ColorBitMagic Warning
+Processing color at index 11: <Gegl.Color object at 0x10639b780 (GeglColor at 0x11a1426a0)>
+
+  ColorBitMagic Warning
+Color: R=0.109, G=0.165, B=0.102, A=1.000
+
+  ColorBitMagic Warning
+Unexpected error in log_palette_colormap: argument array: Expected Gegl.Color, but got list
+
+  ColorBitMagic Warning
+Entry text: Test
 
