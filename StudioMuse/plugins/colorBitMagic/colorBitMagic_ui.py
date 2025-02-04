@@ -3,95 +3,39 @@ import os
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
-from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap
+from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error
+from ui.dialogManager import DialogManager
 
 # Global variable to keep track of the dmMain dialog
 dm_main_dialog = None
 
-def greet_from_ui():
-    Gimp.message("Hello from the UI module!")
 
-def log_error(message, exception=None):
-    """Helper function to log errors with optional exception details."""
-    if exception:
-        Gimp.message(f"Error: {message} - Exception: {exception}")
-    else:
-        Gimp.message(f"Error: {message}")
 
 def show_color_bit_magic_dialog():
-    Gimp.message("Initializing UI...")
-
-    # Determine the directory of the current script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    xml_path = os.path.join(script_dir, "templates/homeDialog.xml")
-    Gimp.message(f"Loading UI file from: {xml_path}")
-
-    builder = Gtk.Builder()
-    try:
-        builder.add_from_file(xml_path)
-    except Exception as e:
-        log_error(f"Error loading UI file from {xml_path}", e)
-        return
-
-    # Get the main window from the builder
-    dialog = builder.get_object("GtkWindow")
-    if dialog is None:
-        log_error("Could not find GtkWindow in the XML file.")
-        return
-
-    # Connect signals if any
-    builder.connect_signals({
-        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked,
-        "on_exit_clicked": Gtk.main_quit,
-        "on_delete_event": Gtk.main_quit
-    })
-
-    # Populate the palette dropdown
-    populate_palette_dropdown(builder)
-
-    # Show the dialog
-    dialog.show_all()
-
-    # Start the GTK main loop
-    Gtk.main()
+    DialogManager("homeDialog.xml", "GtkWindow", {
+        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked
+    }).show()
 
 def on_palette_demystifyer_clicked(button):
-    Gimp.message("Palette Demystifyer button clicked. Opening dmMain dialog...")
-    try:
-        show_dm_main_dialog()
-    except Exception as e:
-        Gimp.message(f"Error while opening dmMain dialog: {e}")
+    """Opens the Palette Demystifier dialog and populates the palette dropdown."""
+    Gimp.message("Opening Palette Demystifier dialog...")
+    
+    dm_dialog = DialogManager("dmMain.xml", "dmMainWindow", {
+        "on_submit_clicked": on_submit_clicked,
+        "on_exit_clicked": on_dm_main_dialog_close,
+        "on_delete_event": on_dm_main_dialog_close,
+        "on_add_physical_palette_clicked": on_add_physical_palette_clicked
+    })
+    
+    # Populate palette dropdown
+    populate_palette_dropdown(dm_dialog.builder)
+
+    dm_dialog.show()
 
 def on_exit_clicked(button):
     Gimp.message("Exit button clicked!")
     Gtk.main_quit()  # Quit the GTK main loop when the exit button is clicked
 
-def show_dm_main_dialog():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    xml_path = os.path.join(script_dir, "templates/dmMain.xml")
-
-    builder = Gtk.Builder()
-    try:
-        builder.add_from_file(xml_path)
-        Gimp.message("dmMain UI file loaded successfully.")
-    except Exception as e:
-        log_error(f"Error loading dmMain UI file from {xml_path}", e)
-        return
-
-    dm_main_dialog = builder.get_object("dmMainWindow")
-    if dm_main_dialog is None:
-        log_error("Could not find dmMainWindow in the XML file. Check the ID.")
-        return
-
-    # Pass builder to handlers that need it
-    builder.connect_signals({
-    "on_submit_clicked": lambda button: on_submit_clicked(button, builder),
-    "on_exit_clicked": lambda button: on_dm_main_dialog_close(dm_main_dialog),
-    "on_delete_event": lambda *args: on_dm_main_dialog_close(dm_main_dialog),
-    "on_add_physical_palette_clicked": lambda button: on_add_physical_palette_clicked(button)
-})
-
-    populate_palette_dropdown(builder)
 
     Gimp.message("dmMainWindow found, displaying dialog.")
     dm_main_dialog.show_all()

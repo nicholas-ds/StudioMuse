@@ -2,6 +2,13 @@ import gi
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp, Gtk, Gegl
 
+def log_error(message, exception=None):
+    """Helper function to log errors with optional exception details."""
+    if exception:
+        Gimp.message(f"Error: {message} - Exception: {exception}")
+    else:
+        Gimp.message(f"Error: {message}")
+
 def populate_palette_dropdown(builder):
     try:
         Gimp.message("Starting to populate palette dropdown...")
