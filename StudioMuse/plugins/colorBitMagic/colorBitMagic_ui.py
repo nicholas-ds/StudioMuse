@@ -11,6 +11,13 @@ dm_main_dialog = None
 def greet_from_ui():
     Gimp.message("Hello from the UI module!")
 
+def log_error(message, exception=None):
+    """Helper function to log errors with optional exception details."""
+    if exception:
+        Gimp.message(f"Error: {message} - Exception: {exception}")
+    else:
+        Gimp.message(f"Error: {message}")
+
 def show_color_bit_magic_dialog():
     Gimp.message("Initializing UI...")
 
@@ -23,13 +30,13 @@ def show_color_bit_magic_dialog():
     try:
         builder.add_from_file(xml_path)
     except Exception as e:
-        Gimp.message(f"Error loading UI file: {e}")
+        log_error(f"Error loading UI file from {xml_path}", e)
         return
 
     # Get the main window from the builder
     dialog = builder.get_object("GtkWindow")
     if dialog is None:
-        Gimp.message("Error: Could not find GtkWindow in the XML file.")
+        log_error("Could not find GtkWindow in the XML file.")
         return
 
     # Connect signals if any
@@ -68,19 +75,20 @@ def show_dm_main_dialog():
         builder.add_from_file(xml_path)
         Gimp.message("dmMain UI file loaded successfully.")
     except Exception as e:
-        Gimp.message(f"Error loading dmMain UI file: {e}")
+        log_error(f"Error loading dmMain UI file from {xml_path}", e)
         return
 
     dm_main_dialog = builder.get_object("dmMainWindow")
     if dm_main_dialog is None:
-        Gimp.message("Error: Could not find dmMainWindow in the XML file. Check the ID.")
+        log_error("Could not find dmMainWindow in the XML file. Check the ID.")
         return
 
     # Pass builder to handlers that need it
     builder.connect_signals({
     "on_submit_clicked": lambda button: on_submit_clicked(button, builder),
     "on_exit_clicked": lambda button: on_dm_main_dialog_close(dm_main_dialog),
-    "on_delete_event": lambda *args: on_dm_main_dialog_close(dm_main_dialog)
+    "on_delete_event": lambda *args: on_dm_main_dialog_close(dm_main_dialog),
+    "on_add_physical_palette_clicked": lambda button: on_add_physical_palette_clicked(button)
 })
 
     populate_palette_dropdown(builder)
@@ -107,10 +115,10 @@ def on_submit_clicked(button, builder):
             entry_text = entry.get_text()
             Gimp.message(f"Entry text: {entry_text}")
         else:
-            Gimp.message("Error: Could not find GtkEntry in the UI. Check XML IDs.")
+            log_error("Could not find GtkEntry in the UI. Check XML IDs.")
 
     except Exception as e:
-        Gimp.message(f"Error while logging palette colors and entry text: {e}")
+        log_error("Error while logging palette colors and entry text", e)
 
 def populate_palette_dropdown(builder):
     Gimp.message("Starting to populate palette dropdown...")
@@ -118,7 +126,7 @@ def populate_palette_dropdown(builder):
     # Get the dropdown widget
     palette_dropdown = builder.get_object("paletteDropdown")
     if palette_dropdown is None:
-        Gimp.message("Error: Could not find 'paletteDropdown' in the UI. Check XML IDs.")
+        log_error("Could not find 'paletteDropdown' in the UI. Check XML IDs.")
         return
 
     try:
@@ -147,5 +155,39 @@ def populate_palette_dropdown(builder):
         Gimp.message("Palette dropdown populated successfully.")
 
     except Exception as e:
-        Gimp.message(f"Error in populate_palette_dropdown: {e}")
+        log_error("Error in populate_palette_dropdown", e)
         palette_dropdown.append_text("Error loading palettes")
+
+def on_add_physical_palette_clicked(button):
+    Gimp.message("Add Physical Palette button clicked. Opening addPalette dialog...")
+    try:
+        show_add_palette_dialog()
+    except Exception as e:
+        Gimp.message(f"Error while opening addPalette dialog: {e}")
+
+def show_add_palette_dialog():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    xml_path = os.path.join(script_dir, "templates/addPalette.xml")
+
+    builder = Gtk.Builder()
+    try:
+        builder.add_from_file(xml_path)
+        Gimp.message("addPalette UI file loaded successfully.")
+    except Exception as e:
+        log_error(f"Error loading addPalette UI file from {xml_path}", e)
+        return
+
+    add_palette_dialog = builder.get_object("addPaletteWindow")
+    if add_palette_dialog is None:
+        log_error("Could not find addPaletteWindow in the XML file. Check the ID.")
+        return
+
+    # Connect signals for the addPalette dialog buttons
+    builder.connect_signals({
+        "on_save_clicked": lambda button: on_save_palette(button, builder),
+        "on_generate_clicked": lambda button: on_generate_palette(button, builder),
+        "on_close_clicked": lambda button: add_palette_dialog.destroy()
+    })
+
+    Gimp.message("addPaletteWindow found, displaying dialog.")
+    add_palette_dialog.show_all()

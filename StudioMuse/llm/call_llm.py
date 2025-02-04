@@ -6,50 +6,22 @@ import requests
 
 def call_llm(entry_text):
     """
-    Sends user-provided text describing their physical palette and RGB colors 
-    extracted from GIMP color paletteto the Perplexity Sonar API and retrieves the response.
-
-    :param entry_text: The text from the physicalPaletteEntry GtkEntry widget.
-    :param rgb_colors: A list of RGB tuples representing the selected palette colors.
-    :return: The response from the Perplexity Sonar API.
+    Queries the Perplexity Sonar API to retrieve the Mont Marte pastel color list and match colors.
     """
     try:
         url = "https://api.perplexity.ai/chat/completions"
-        
-        # Create the prompt for Sonar
-        #prompt = palette_dm_prompt  # Assuming this is a string or formatted string
 
         payload = {
-            "model": "sonar",
+            "model": "sonar",  # Using the model that worked
             "messages": [
                 {
-                    "role": "system",
-                    "content": """Act as an expert artist familiar with the Mont Marte 52 Extra Soft Vibrant oil pastel set. 
-                    Provide: 
-                    1. Direct color matches from the set for given RGB values 
-                    2. Blending combinations for precise matches 
-                    3. Application tips for oil pastels
-                    """
-
-
-                },
-                {
                     "role": "user",
-                    "content": entry_text
+                    "content": f"""
+                    Find the full color list for the Mont Marte 52 Extra Soft Vibrant Oil Pastel Set.
+                    """
                 }
             ],
-            "max_tokens": 1024,
-            "temperature": 0.2,
-            "top_p": 0.9,
-            "search_domain_filter": None,
-            "return_images": False,
-            "return_related_questions": False,
-            "search_recency_filter": "month",
-            "top_k": 0,
-            "stream": False,
-            "presence_penalty": 0,
-            "frequency_penalty": 1,
-            "response_format": None
+            "top_k": 5,  # Keep it reasonable
         }
 
         headers = {
@@ -58,39 +30,67 @@ def call_llm(entry_text):
         }
 
         response = requests.post(url, json=payload, headers=headers)
-
-        # Check if the request was successful
         response.raise_for_status()
 
-        # Print the full response for debugging
-        #print("Full Response:", response.json())
-
-        # Extract the content from the response
-        choices = response.json().get('choices', [])
-        if choices:
-            return choices[0].get('message', {}).get('content', 'No content returned')
-        else:
-            return 'No content returned'
+        return response.json()
 
     except Exception as e:
         return f"Error sending data to Sonar: {type(e).__name__}: {e}"
 
+def test_perplexity_web_search():
+    """
+    Tests if the Perplexity API key supports web search by querying for news headlines.
 
+    :return: A JSON response indicating whether web search is enabled.
+    """
+    url = "https://api.perplexity.ai/chat/completions"
+
+    payload = {
+        "model": "sonar",  # Use "sonar" instead of "sonar-pro" for better search support
+        "messages": [{"role": "user", "content": "Find the full color list for the Mont Marte 52 Extra Soft Vibrant Oil Pastel Set."}],
+        "top_k": 5,  # Ensure web search is triggered
+    }
+
+    headers = {
+        "Authorization": f"Bearer {os.getenv('PERPLEXITY_KEY')}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
         
+        data = response.json()
+        
+        # Check if response contains valid search results
+        if "choices" in data and data["choices"]:
+            print("✅ Web search is enabled for this API key.")
+        else:
+            print("❌ Web search is NOT enabled for this API key.")
+        
+        return data
 
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ API Request Failed: {e}")
+        return None
+        
 # test_call_llm.py
 def main():
     # Example entry text and RGB colors
-    rgb_colors = [(21, 52, 52)]  # Example RGB tuples
+    rgb_colors = [(33, 40, 39)]  # Example RGB tuples
     entry_text = f"""Target RGB: {rgb_colors}
                 Available colors: [List all Mont Marte colors here]
                 Response format: JSON with 'direct_matches', 'blending_suggestions', 'usage_tips'"""
 
     # Call the LLM function
     response = call_llm(entry_text)
+    #response = test_perplexity_web_search()
 
     # Print the response
     print("LLM Response:", response)
+
+
+
 
 if __name__ == "__main__":
     main()
