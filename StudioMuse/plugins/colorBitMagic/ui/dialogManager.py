@@ -46,10 +46,7 @@ class DialogManager:
         self.__class__.dialogs[window_id] = self.dialog  # Use class variable
 
         # Connect signals dynamically
-        default_signals = {
-            "on_exit_clicked": self.close,
-            "on_delete_event": self.close
-        }
+        default_signals = {}
         if signal_handlers:
             default_signals.update(signal_handlers)
 
@@ -62,25 +59,3 @@ class DialogManager:
             if not self.__class__.gtk_running:
                 self.__class__.gtk_running = True
                 Gtk.main()
-
-    @classmethod
-    def close_all(cls):
-        """Closes all open dialogs."""
-        for window_id, dialog in cls.dialogs.items():
-            if dialog:
-                dialog.destroy()
-        cls.dialogs.clear()  # Clear the tracking dictionary
-
-    def close(self, *args):
-        """Closes the dialog and quits Gtk main loop if necessary."""
-        if self.dialog:
-            self.dialog.destroy()
-
-        # Remove from tracking
-        if self.window_id in self.__class__.dialogs:
-            del self.__class__.dialogs[self.window_id]
-
-        # Quit Gtk main if no more dialogs are open
-        if not self.__class__.dialogs:
-            self.__class__.gtk_running = False
-            Gtk.main_quit()

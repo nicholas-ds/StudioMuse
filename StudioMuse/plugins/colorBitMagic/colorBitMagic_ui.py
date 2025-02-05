@@ -14,8 +14,7 @@ dm_main_dialog = None
 def show_color_bit_magic_dialog():
     """Shows the Color Bit Magic dialog."""
     DialogManager("homeDialog.xml", "GtkWindow", {
-        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked,
-        "on_exit_clicked": on_exit_clicked  # Connect the exit button
+        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked
     }).show()
 
 def on_palette_demystifyer_clicked(button):
@@ -24,8 +23,6 @@ def on_palette_demystifyer_clicked(button):
     
     dm_dialog = DialogManager("dmMain.xml", "dmMainWindow", {
         "on_submit_clicked": on_submit_clicked,
-        "on_exit_clicked": on_dm_main_dialog_close,
-        "on_delete_event": on_dm_main_dialog_close,
         "on_add_physical_palette_clicked": on_add_physical_palette_clicked
     })
     
@@ -34,26 +31,6 @@ def on_palette_demystifyer_clicked(button):
 
     dm_dialog.show()
 
-def on_exit_clicked(button):
-    """Handles the exit button click event."""
-    Gimp.message("Exit button clicked!")
-    
-    # Close all active dialogs using the DialogManager
-    DialogManager.close_all()  # This will close all dialogs managed by DialogManager
-
-    # Quit the GTK main loop when the exit button is clicked
-    Gtk.main_quit()
-
-
-    Gimp.message("dmMainWindow found, displaying dialog.")
-    dm_main_dialog.show_all()
-
-def on_dm_main_dialog_close(*args):
-    global dm_main_dialog
-    Gimp.message("Closing dmMain dialog.")
-    dm_main_dialog.destroy()
-    dm_main_dialog = None
-    Gtk.main_quit()
 
 def on_submit_clicked(button, builder):
     Gimp.message("Submit button clicked. Logging palette colors and entry text...")
