@@ -1,0 +1,9 @@
+  ColorBitMagic Warning
+Creating procedure: color-bit-magic
+
+  GIMP Error
+Plug-in crashed: "colorBitMagic.py"
+(/Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/colorBitMagic.py)
+
+The dying plug-in may have messed up GIMP's internal state. You may want to save your images and restart GIMP to be on the safe side.
+

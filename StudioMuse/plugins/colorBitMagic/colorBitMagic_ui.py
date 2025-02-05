@@ -12,8 +12,10 @@ dm_main_dialog = None
 
 
 def show_color_bit_magic_dialog():
+    """Shows the Color Bit Magic dialog."""
     DialogManager("homeDialog.xml", "GtkWindow", {
-        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked
+        "on_palette_demystifyer_clicked": on_palette_demystifyer_clicked,
+        "on_exit_clicked": on_exit_clicked  # Connect the exit button
     }).show()
 
 def on_palette_demystifyer_clicked(button):
@@ -33,8 +35,14 @@ def on_palette_demystifyer_clicked(button):
     dm_dialog.show()
 
 def on_exit_clicked(button):
+    """Handles the exit button click event."""
     Gimp.message("Exit button clicked!")
-    Gtk.main_quit()  # Quit the GTK main loop when the exit button is clicked
+    
+    # Close all active dialogs using the DialogManager
+    DialogManager.close_all()  # This will close all dialogs managed by DialogManager
+
+    # Quit the GTK main loop when the exit button is clicked
+    Gtk.main_quit()
 
 
     Gimp.message("dmMainWindow found, displaying dialog.")
@@ -63,44 +71,6 @@ def on_submit_clicked(button, builder):
 
     except Exception as e:
         log_error("Error while logging palette colors and entry text", e)
-
-def populate_palette_dropdown(builder):
-    Gimp.message("Starting to populate palette dropdown...")
-
-    # Get the dropdown widget
-    palette_dropdown = builder.get_object("paletteDropdown")
-    if palette_dropdown is None:
-        log_error("Could not find 'paletteDropdown' in the UI. Check XML IDs.")
-        return
-
-    try:
-        # Ensure it's a valid GtkComboBoxText
-        if not isinstance(palette_dropdown, Gtk.ComboBoxText):
-            Gimp.message(f"Error: 'paletteDropdown' is not a GtkComboBoxText but a {type(palette_dropdown)}.")
-            return
-
-        # Clear existing items
-        palette_dropdown.remove_all()
-
-        # Retrieve the list of palettes
-        palettes = Gimp.palettes_get_list("")
-        if not palettes:
-            Gimp.message("No palettes found.")
-            palette_dropdown.append_text("No palettes found")
-            return
-
-        Gimp.message(f"Retrieved {len(palettes)} palettes.")
-
-        # Extract and append palette names
-        for palette in palettes:
-            palette_name = palette.get_name() if hasattr(palette, 'get_name') else str(palette)
-            palette_dropdown.append_text(palette_name)
-
-        Gimp.message("Palette dropdown populated successfully.")
-
-    except Exception as e:
-        log_error("Error in populate_palette_dropdown", e)
-        palette_dropdown.append_text("Error loading palettes")
 
 def on_add_physical_palette_clicked(button):
     Gimp.message("Add Physical Palette button clicked. Opening addPalette dialog...")
