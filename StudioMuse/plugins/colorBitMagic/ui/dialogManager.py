@@ -46,7 +46,10 @@ class DialogManager:
         self.__class__.dialogs[window_id] = self.dialog  # Use class variable
 
         # Connect signals dynamically
-        default_signals = {}
+        default_signals = {
+            "on_exit_clicked": self.on_exit_clicked  # Automatically attach exit handler
+        }
+
         if signal_handlers:
             default_signals.update(signal_handlers)
 
@@ -59,3 +62,18 @@ class DialogManager:
             if not self.__class__.gtk_running:
                 self.__class__.gtk_running = True
                 Gtk.main()
+
+    def on_exit_clicked(self, button):
+        """Handles the exit button click by closing the dialog and stopping the GTK loop if needed."""
+        Gimp.message(f"Closing dialog: {self.window_id}")
+        
+        if self.dialog:
+            self.dialog.destroy()
+        
+        # Stop GTK main loop if it's running
+        if Gtk.main_level() > 0:
+            Gtk.main_quit()
+        
+        # Remove dialog reference from the class dictionary
+        if self.window_id in self.__class__.dialogs:
+            del self.__class__.dialogs[self.window_id]
