@@ -52,9 +52,17 @@ def on_submit_clicked(button, builder):
 def on_add_physical_palette_clicked(button):
     Gimp.message("Add Physical Palette button clicked. Opening addPalette dialog...")
     try:
-        show_add_palette_dialog()
+        # Use DialogManager to show the addPalette dialog
+        DialogManager("addPalette.xml", "addPaletteWindow", {
+            "on_close_clicked": on_close_clicked  # Connect the new handler
+        }).show()
     except Exception as e:
         Gimp.message(f"Error while opening addPalette dialog: {e}")
+
+def on_close_clicked(button):
+    """Handles the close button click by only closing the dialog."""
+    Gimp.message("Closing addPalette dialog.")
+    button.get_toplevel().destroy()
 
 def show_add_palette_dialog():
     script_dir = os.path.dirname(os.path.abspath(__file__))
