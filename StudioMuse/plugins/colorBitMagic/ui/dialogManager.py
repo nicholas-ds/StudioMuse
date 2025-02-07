@@ -15,7 +15,7 @@ class DialogManager:
         """
         Initializes the dialog from an XML file.
 
-        :param ui_file: XML filename (e.g., "homeDialog.xml")
+        :param ui_file: XML filename (e.g., "dmMain.xml")
         :param window_id: The main window ID in the XML (e.g., "GtkWindow")
         :param signal_handlers: (Optional) Dictionary of signal handlers for this dialog
         """
@@ -41,19 +41,24 @@ class DialogManager:
         if self.dialog is None:
             log_error(f"Could not find '{window_id}' in {ui_file}.")
             return
+        
+        self.dialog.set_position(Gtk.WindowPosition.CENTER) 
 
         # Store dialog reference
-        self.__class__.dialogs[window_id] = self.dialog  # Use class variable
+        self.__class__.dialogs[window_id] = self  # Store entire DialogManager instance
 
-        # Connect signals dynamically
+        # ✅ Merge default signals with user-provided signals
         default_signals = {
             "on_exit_clicked": self.on_exit_clicked  # Automatically attach exit handler
         }
 
         if signal_handlers:
-            default_signals.update(signal_handlers)
+            default_signals.update(signal_handlers)  # Merge with custom handlers
 
+        # ✅ Connect all signals dynamically
         self.builder.connect_signals(default_signals)
+        
+        Gimp.message(f"Connected signals for {window_id}")
 
     def show(self):
         """Displays the dialog and starts Gtk main loop if necessary."""

@@ -1,9 +1,48 @@
   ColorBitMagic Warning
 Creating procedure: color-bit-magic
 
-  GIMP Error
-Plug-in crashed: "colorBitMagic.py"
-(/Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/colorBitMagic.py)
+  ColorBitMagic Warning
+Loading UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/homeDialog.xml
 
-The dying plug-in may have messed up GIMP's internal state. You may want to save your images and restart GIMP to be on the safe side.
+  ColorBitMagic Warning
+Connected signals for GtkWindow
+
+  ColorBitMagic Warning
+Creating procedure: color-bit-magic
+
+  ColorBitMagic Warning
+Loading UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/homeDialog.xml
+
+  ColorBitMagic Warning
+Connected signals for GtkWindow
+
+  ColorBitMagic Warning
+Opening Palette Demystifier dialog...
+
+  ColorBitMagic Warning
+Loading UI file from: /Users/NickSmay/Library/Application Support/GIMP/3.0/plug-ins/colorBitMagic/templates/dmMain.xml
+
+  ColorBitMagic Warning
+Connected signals for dmMainWindow
+
+  ColorBitMagic Warning
+Starting to populate palette dropdown...
+
+  ColorBitMagic Warning
+Retrieved 43 palettes.
+
+  ColorBitMagic Warning
+Palette dropdown populated successfully.
+
+  ColorBitMagic Warning
+Add Physical Palette button clicked. Opening addPalette dialog...
+
+  ColorBitMagic Warning
+Error while opening addPalette dialog: name 'on_generate_clicked' is not defined
+
+  ColorBitMagic Warning
+Add Physical Palette button clicked. Opening addPalette dialog...
+
+  ColorBitMagic Warning
+Error while opening addPalette dialog: name 'on_generate_clicked' is not defined
 

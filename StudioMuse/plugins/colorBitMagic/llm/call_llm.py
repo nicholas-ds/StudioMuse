@@ -1,7 +1,6 @@
 import os
 import requests
-# from prompts import palette_dm_prompt  # Unused import
-
+from .prompts import add_physical_palette_prompt
 
 
 def call_llm(entry_text):
@@ -16,12 +15,10 @@ def call_llm(entry_text):
             "messages": [
                 {
                     "role": "user",
-                    "content": f"""
-                    Find the full color list for the Mont Marte 52 Extra Soft Vibrant Oil Pastel Set.
-                    """
+                    "content": add_physical_palette_prompt
                 }
             ],
-            "top_k": 5,  # Keep it reasonable
+            "top_k": 5,
         }
 
         headers = {

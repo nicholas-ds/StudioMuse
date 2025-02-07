@@ -1,10 +1,13 @@
 import gi
 import os
+import sys
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
-from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error
+from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error, get_palette_colors
 from ui.dialogManager import DialogManager
+from llm.call_llm import call_llm
+
 
 # Global variable to keep track of the dmMain dialog
 dm_main_dialog = None
@@ -32,29 +35,40 @@ def on_palette_demystifyer_clicked(button):
     dm_dialog.show()
 
 
-def on_submit_clicked(button, builder):
-    Gimp.message("Submit button clicked. Logging palette colors and entry text...")
-    try:
-        # Log palette colors
-        log_palette_colormap(builder)  # Assuming this function logs the palette colors
+def on_submit_clicked(button):
+    Gimp.message("Submit button clicked. Logging selected palette...")
 
-        # Retrieve the GtkEntry widget
-        entry = builder.get_object("physicalPaletteEntry")  # Use the ID from the XML
-        if entry is not None:
-            entry_text = entry.get_text()
-            Gimp.message(f"Entry text: {entry_text}")
+    try:
+        Gimp.message("Entered on_submit_clicked function.")
+
+        # Retrieve the builder instance from the DialogManager
+        builder = DialogManager.dialogs.get("dmMainWindow")
+        if builder is None:
+            log_error("DialogManager did not provide a valid builder for dmMainWindow.")
+            return
+
+        palette_dropdown = builder.builder.get_object("paletteDropdown")
+        if palette_dropdown is not None:
+            # Get the active text from the dropdown
+            selected_palette = palette_dropdown.get_active_text()
+            if selected_palette:
+                Gimp.message(f"Selected palette: {selected_palette}")
+                print(get_palette_colors(selected_palette))
+            else:
+                Gimp.message("No palette selected.")
         else:
-            log_error("Could not find GtkEntry in the UI. Check XML IDs.")
+            log_error("Could not find GtkComboBoxText in the UI. Check XML IDs.")
 
     except Exception as e:
-        log_error("Error while logging palette colors and entry text", e)
+        log_error("Error while logging selected palette", e)
 
 def on_add_physical_palette_clicked(button):
     Gimp.message("Add Physical Palette button clicked. Opening addPalette dialog...")
+    Gimp.message(sys.executable)
     try:
-        # Use DialogManager to show the addPalette dialog
         DialogManager("addPalette.xml", "addPaletteWindow", {
-            "on_close_clicked": on_close_clicked  # Connect the new handler
+            "on_close_clicked": on_close_clicked,
+            "on_generate_clicked": on_generate_clicked  # Connect the new handler
         }).show()
     except Exception as e:
         Gimp.message(f"Error while opening addPalette dialog: {e}")
@@ -90,3 +104,43 @@ def show_add_palette_dialog():
 
     Gimp.message("addPaletteWindow found, displaying dialog.")
     add_palette_dialog.show_all()
+
+def on_generate_clicked(button):
+    Gimp.message("Generate button clicked. Sending text to LLM...")
+
+    # Retrieve the builder instance for addPaletteWindow
+    builder = DialogManager.dialogs.get("addPaletteWindow")
+    if builder is None:
+        Gimp.message("DialogManager did not provide a valid builder for addPaletteWindow.")
+        return
+
+    # Get the GtkEntry widget containing the user input
+    entry_widget = builder.builder.get_object("GtkEntry")
+    if not entry_widget:
+        Gimp.message("GtkEntry not found in addPaletteWindow.")
+        return
+
+    entry_text = entry_widget.get_text()
+    if not entry_text:
+        Gimp.message("No text entered in GtkEntry.")
+        return
+
+    Gimp.message(f"Text to send to LLM: {entry_text}")
+
+    # Call the LLM function with the entry text
+    response = call_llm(entry_text)
+
+    # Get the GtkTextView to display the response
+    text_view = builder.builder.get_object("GtkTextView")
+    if not text_view:
+        Gimp.message("GtkTextView not found in addPaletteWindow.")
+        return
+
+    # Set the response in the GtkTextView
+    text_buffer = text_view.get_buffer()
+    text_buffer.set_text(str(response))
+
+    # Save the palette logic
+    Gimp.message(f"Palette saved: {entry_text}")
+    # Here you would implement the logic to save the palette
+    # For example, you could write the entry_text to a file or a database
