@@ -1,6 +1,7 @@
 import gi
 import os
 import sys
+import json
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
@@ -135,12 +136,28 @@ def on_generate_clicked(button):
     if not text_view:
         Gimp.message("GtkTextView not found in addPaletteWindow.")
         return
+    
+    # Extract the content from the LLM response
+    content = response['choices'][0]['message']['content']
+
+    # Find the JSON string within the content
+    start_index = content.find('```json') + len('```json\n')
+    end_index = content.find('```', start_index)
+    json_str = content[start_index:end_index]
+
+    # Parse the JSON string to get the list of colors
+    color_data = json.loads(json_str)
+    colors = color_data.get('colors', [])
+
+    print(colors)
 
     # Set the response in the GtkTextView
     text_buffer = text_view.get_buffer()
-    text_buffer.set_text(str(response))
+    text_buffer.set_text(str(colors))
 
     # Save the palette logic
-    Gimp.message(f"Palette saved: {entry_text}")
+    Gimp.message(f"Palette saved: {response['choices'][0]['message']['content']}")
+
+    
     # Here you would implement the logic to save the palette
     # For example, you could write the entry_text to a file or a database

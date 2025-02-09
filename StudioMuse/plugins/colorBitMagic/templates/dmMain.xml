@@ -163,7 +163,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="margin-start">17</property>
-                    <property name="stock">gtk-missing-image</property>
+                    <property name="file">"/Users/NickSmay/Desktop/StudioMuse/StudioMuse/plugins/colorBitMagic/assets/WizardSecond.png"</property>
                   </object>
                   <packing>
                     <property name="resize">False</property>

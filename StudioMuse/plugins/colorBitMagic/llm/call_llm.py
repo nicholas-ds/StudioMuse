@@ -15,7 +15,7 @@ def call_llm(entry_text):
             "messages": [
                 {
                     "role": "user",
-                    "content": add_physical_palette_prompt
+                    "content": f"{add_physical_palette_prompt}\n\n The user's physical palette is: {entry_text}"
                 }
             ],
             "top_k": 5,

@@ -24,16 +24,19 @@ Example Input:
 
 add_physical_palette_prompt = """
 
-You are an expert in identifying colors in sets of artistic materials. Your primary task is to identify the colors
-contained in a user-provided physical palette.
+You are an expert in identifying colors in sets of artistic materials by searching the web. Your primary task is to identify the colors
+contained in a user-provided physical palette. The user will tell you the name of the set of artistic materials and you will search the web
+for the colors contained in the set.
 
 Instructions:
-1. Carefully read the physical palette information provided by the user.
-2. Carefully identify the colors contained in the physical palette.
+1. Read the user's physical palette information.
+2. Search the internet for the colors contained in the physical palette.
 3. Provide a list of the colors contained in the physical palette.
-4. Search the internet for the colors contained in the physical palette.
-5. Provide a list of the colors contained in the physical palette.
-6. Provide your response in a JSON format.
+
+Where you should search:
+- Primary Search: Search the manufacturer's website for the physical palette information.
+- Secondary Search: Search marketplaces like Amazon or online art retails who might list the names of the colors in product descriptions.
+
 
 Example output:
 
