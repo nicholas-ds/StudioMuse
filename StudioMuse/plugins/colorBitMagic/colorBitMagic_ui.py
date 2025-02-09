@@ -7,8 +7,7 @@ from gi.repository import Gimp
 from gi.repository import Gtk
 from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error, get_palette_colors
 from ui.dialogManager import DialogManager
-from llm.call_llm import call_llm
-
+from llm.LLMPhysicalPalette import LLMPhysicalPalette
 
 # Global variable to keep track of the dmMain dialog
 dm_main_dialog = None
@@ -128,36 +127,27 @@ def on_generate_clicked(button):
 
     Gimp.message(f"Text to send to LLM: {entry_text}")
 
-    # Call the LLM function with the entry text
-    response = call_llm(entry_text)
+    # Create an instance of LLMPhysicalPalette
+    palette_name = "My Physical Palette"  # You can modify this as needed
+    palette_source = "user"  # or "llm", "GIMP", etc.
+    llm_palette = LLMPhysicalPalette(physical_palette_name=palette_name, palette_source=palette_source)
 
-    # Get the GtkTextView to display the response
-    text_view = builder.builder.get_object("GtkTextView")
-    if not text_view:
-        Gimp.message("GtkTextView not found in addPaletteWindow.")
-        return
-    
-    # Extract the content from the LLM response
-    content = response['choices'][0]['message']['content']
+    # Call the call_llm method with the entry text
+    result = llm_palette.call_llm(entry_text)
 
-    # Find the JSON string within the content
-    start_index = content.find('```json') + len('```json\n')
-    end_index = content.find('```', start_index)
-    json_str = content[start_index:end_index]
+    # Check if the result is an instance of LLMPhysicalPalette
+    if isinstance(result, LLMPhysicalPalette):
+        # Get the GtkTextView to display the response
+        text_view = builder.builder.get_object("GtkTextView")
+        if not text_view:
+            Gimp.message("GtkTextView not found in addPaletteWindow.")
+            return
+        
+        # Set the response in the GtkTextView
+        text_buffer = text_view.get_buffer()
+        text_buffer.set_text(str(result.colors_listed))  # Display the colors listed
 
-    # Parse the JSON string to get the list of colors
-    color_data = json.loads(json_str)
-    colors = color_data.get('colors', [])
-
-    print(colors)
-
-    # Set the response in the GtkTextView
-    text_buffer = text_view.get_buffer()
-    text_buffer.set_text(str(colors))
-
-    # Save the palette logic
-    Gimp.message(f"Palette saved: {response['choices'][0]['message']['content']}")
-
-    
-    # Here you would implement the logic to save the palette
-    # For example, you could write the entry_text to a file or a database
+        # Save the palette logic
+        Gimp.message(f"Palette saved: {result.colors_listed}")
+    else:
+        Gimp.message(result)  # Handle error message
