@@ -1,0 +1,65 @@
+StudioMuse/
+├── LICENSE
+├── README.md
+├── ProjectOverview.md
+├── requirements.txt
+├── errorLog.txt
+├── assets/                        # (Static assets like icons, reference images)
+├── scripts/                       # (Utility scripts for installation, testing, etc.)
+│   ├── install.sh                 # (Installation script)
+│   ├── update.sh                  # (Potential auto-updater)
+│   ├── test_plugin.sh              # (Script to test the plugin)
+│   ├── debug.py                    # (Automated debugging script)
+│   └── generate_docs.py             # (Automated doc generation script)
+│
+├── backend/                        # (Handles logic outside of GIMP UI)
+│   ├── __init__.py
+│   ├── api/                        # (API layer for external services, LLM, etc.)
+│   │   ├── __init__.py
+│   │   ├── llm_api.py              # (Handles LLM requests)
+│   │   ├── color_matching.py        # (Processes colors for matching)
+│   │   ├── palette_analysis.py      # (Processes palettes)
+│   ├── data/                        # (Handles data storage, caching)
+│   │   ├── __init__.py
+│   │   ├── cache_manager.py         # (Cache for responses & palettes)
+│   │   ├── file_manager.py          # (Handles file read/write operations)
+│   ├── config.py                    # (Stores global settings, API keys, paths)
+│
+├── plugins/                         # (All GIMP plugins live here)
+│   ├── install.sh                   # (Script to install all plugins)
+│   ├── colorBitMagic/               # (First plugin: Color analysis & palettes)
+│   │   ├── __init__.py
+│   │   ├── colorBitMagic.py         # (Main plugin entry point)
+│   │   ├── dialogs/                 # (Encapsulated UI components)
+│   │   │   ├── homeDialog/          # (Encapsulated Home UI)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── homeDialog.xml
+│   │   │   │   ├── home_ui.py
+│   │   │   │   ├── home_signals.py
+│   │   │   │   ├── home_utils.py
+│   │   │   ├── dmMain/              # (Palette Demystifier UI)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── dmMain.xml
+│   │   │   │   ├── dm_ui.py
+│   │   │   │   ├── dm_signals.py
+│   │   │   │   ├── dm_utils.py
+│   │   │   ├── addPalette/          # (Add Palette UI)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── addPalette.xml
+│   │   │   │   ├── add_ui.py
+│   │   │   │   ├── add_signals.py
+│   │   │   │   ├── add_utils.py
+│   │   ├── utils/                   # (Shared utilities)
+│   │   │   ├── __init__.py
+│   │   │   ├── logging.py
+│   │   │   ├── error_handling.py
+│   │   │   ├── palette_utils.py
+│   │   ├── plugin_factory.py        # (Registers the plugin dynamically)
+│
+└── docs/                            # (Documentation)
+    ├── README.md                    # (Project introduction)
+    ├── setup_guide.md                # (Installation and setup)
+    ├── api_docs.md                    # (API documentation)
+    ├── design_notes.md                # (Architecture and design decisions)
+    ├── testing.md                     # (Guide for testing the plugin)
+    └── contributing.md                 # (Guide for contributing)

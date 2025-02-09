@@ -2,6 +2,13 @@ import gi
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp, Gtk, Gegl
 
+def log_error(message, exception=None):
+    """Helper function to log errors with optional exception details."""
+    if exception:
+        Gimp.message(f"Error: {message} - Exception: {exception}")
+    else:
+        Gimp.message(f"Error: {message}")
+
 def populate_palette_dropdown(builder):
     try:
         Gimp.message("Starting to populate palette dropdown...")
@@ -108,3 +115,22 @@ def log_palette_colormap(builder):
 
     except Exception as e:
         Gimp.message(f"Unexpected error in log_palette_colormap: {e}")
+
+
+def get_palette_colors(palette_name):
+    # Retrieve the palette by name
+    palette = Gimp.Palette.get_by_name(palette_name)
+    
+    if not palette:
+        Gimp.message(f"Palette '{palette_name}' not found.")
+        return []
+
+    # Retrieve all colors in the palette
+    colors = palette.get_colors()
+    
+    # Log or return color values
+    for color in colors:
+        rgba = color.get_rgba()  # Get RGBA values as a tuple
+        Gimp.message(f"Color: R={rgba[0]:.3f}, G={rgba[1]:.3f}, B={rgba[2]:.3f}, A={rgba[3]:.3f}")
+
+    return colors

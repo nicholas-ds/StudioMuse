@@ -23,7 +23,7 @@ gi.require_version('GimpUi', '3.0')
 from gi.repository import GimpUi
 from gi.repository import Gtk, GLib
 
-from colorBitMagic_ui import greet_from_ui, show_color_bit_magic_dialog
+from colorBitMagic_ui import show_color_bit_magic_dialog
 
 
 class ColorBitMagic(Gimp.PlugIn):
