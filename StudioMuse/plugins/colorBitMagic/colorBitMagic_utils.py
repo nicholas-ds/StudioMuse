@@ -2,6 +2,8 @@ import gi
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp, Gtk, Gegl
 
+import json
+
 def log_error(message, exception=None):
     """Helper function to log errors with optional exception details."""
     if exception:
@@ -134,3 +136,25 @@ def get_palette_colors(palette_name):
         Gimp.message(f"Color: R={rgba[0]:.3f}, G={rgba[1]:.3f}, B={rgba[2]:.3f}, A={rgba[3]:.3f}")
 
     return colors
+
+def clean_and_verify_json(response_str):
+    """
+    Converts a JSON-like string from the LLM into a Python dictionary.
+
+    Args:
+        response_str (str): The response string from the LLM.
+
+    Returns:
+        dict: A dictionary representing the parsed JSON.
+    """
+    try:
+        # Replace escaped newlines and unnecessary backslashes
+        cleaned_str = response_str.replace('\\n', '').replace('\\"', '"')
+        
+        # Load as JSON
+        json_data = json.loads(cleaned_str)
+        return json_data
+
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON: {e}")
+        return {}

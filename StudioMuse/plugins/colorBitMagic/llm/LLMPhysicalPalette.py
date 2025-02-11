@@ -2,20 +2,24 @@ from pydantic import BaseModel
 import os
 import requests
 from .prompts import add_physical_palette_prompt
+from colorBitMagic_utils import clean_and_verify_json
 from datetime import datetime
 
 class AnswerFormat(BaseModel):
     colors: list  # Assuming the response will include a list of colors
 
 class LLMPhysicalPalette(BaseModel):
-    physical_palette_name: str
-    colors_listed: list
-    num_colors: int
-    created_date: str
-    palette_source: str
+    physical_palette_name: str = "Default Palette Name"
+    colors_listed: list = []
+    num_colors: int = 0
+    llm_num_colors: int = 0
+    created_date: str = datetime.now().isoformat()
+    palette_source: str = "unknown"
+    additional_notes: str = ""
+    raw_response: dict = {}
 
-    def __init__(self, physical_palette_name: str, palette_source: str):
-        super().__init__(physical_palette_name=physical_palette_name, colors_listed=[], num_colors=0, created_date=datetime.now().isoformat(), palette_source=palette_source)
+    def __init__(self, physical_palette_name: str = "Default Palette Name", palette_source: str = "unknown"):
+        super().__init__(physical_palette_name=physical_palette_name, colors_listed=[], num_colors=0, created_date=datetime.now().isoformat(), palette_source=palette_source, raw_response={})
 
     def call_llm(self, entry_text):
         """
@@ -25,18 +29,15 @@ class LLMPhysicalPalette(BaseModel):
             url = "https://api.perplexity.ai/chat/completions"
 
             payload = {
-                "model": "sonar",
+                "model": "sonar-pro",
                 "messages": [
                     {
                         "role": "user",
                         "content": f"{add_physical_palette_prompt}\n\n The user's physical palette is: {entry_text}"
                     }
                 ],
-                "top_k": 5,
-                "response_format": {
-                    "type": "json_schema",
-                    "json_schema": {"schema": AnswerFormat.model_json_schema()},
-                },
+                "top_k": 10,
+                "temperature": 0.0,
             }
 
             headers = {
@@ -49,8 +50,16 @@ class LLMPhysicalPalette(BaseModel):
 
             # Extract colors from the response
             response_data = response.json()
-            self.colors_listed = response_data['choices'][0]['message']['content']  # Assuming this is where the colors are
+            self.raw_response = response_data  # Store the raw response
+
+            color_json = clean_and_verify_json(response_data['choices'][0]['message']['content'])
+            self.colors_listed = color_json['colors']
+            self.llm_num_colors = color_json['piece_count']
             self.num_colors = len(self.colors_listed)
+            self.physical_palette_name = color_json['set_name']
+            self.additional_notes = color_json['additional_notes']
+            self.palette_source = "Perplexity"
+            self.created_date = datetime.now().isoformat()
 
             return self
 

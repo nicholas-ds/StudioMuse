@@ -128,9 +128,7 @@ def on_generate_clicked(button):
     Gimp.message(f"Text to send to LLM: {entry_text}")
 
     # Create an instance of LLMPhysicalPalette
-    palette_name = "My Physical Palette"  # You can modify this as needed
-    palette_source = "user"  # or "llm", "GIMP", etc.
-    llm_palette = LLMPhysicalPalette(physical_palette_name=palette_name, palette_source=palette_source)
+    llm_palette = LLMPhysicalPalette()
 
     # Call the call_llm method with the entry text
     result = llm_palette.call_llm(entry_text)
@@ -145,9 +143,9 @@ def on_generate_clicked(button):
         
         # Set the response in the GtkTextView
         text_buffer = text_view.get_buffer()
-        text_buffer.set_text(str(result.colors_listed))  # Display the colors listed
+        text_buffer.set_text("\n".join(result.colors_listed))  # Display the colors listed with line breaks
 
         # Save the palette logic
-        Gimp.message(f"Palette saved: {result.colors_listed}")
+        Gimp.message(f"Palette saved: {result}")
     else:
         Gimp.message(result)  # Handle error message
