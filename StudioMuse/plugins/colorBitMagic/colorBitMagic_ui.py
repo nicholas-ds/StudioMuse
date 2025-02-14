@@ -5,7 +5,7 @@ import json
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
-from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error, get_palette_colors
+from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error, get_palette_colors, save_palette_to_file, save_json_to_file, populate_physical_palette_dropdown
 from ui.dialogManager import DialogManager
 from llm.LLMPhysicalPalette import LLMPhysicalPalette
 
@@ -21,7 +21,7 @@ def show_color_bit_magic_dialog():
     }).show()
 
 def on_palette_demystifyer_clicked(button):
-    """Opens the Palette Demystifier dialog and populates the palette dropdown."""
+    """Opens the Palette Demystifier dialog and populates the dropdowns."""
     Gimp.message("Opening Palette Demystifier dialog...")
     
     dm_dialog = DialogManager("dmMain.xml", "dmMainWindow", {
@@ -29,8 +29,9 @@ def on_palette_demystifyer_clicked(button):
         "on_add_physical_palette_clicked": on_add_physical_palette_clicked
     })
     
-    # Populate palette dropdown
+    # Populate both dropdowns
     populate_palette_dropdown(dm_dialog.builder)
+    populate_physical_palette_dropdown(dm_dialog.builder)
 
     dm_dialog.show()
 
@@ -53,7 +54,12 @@ def on_submit_clicked(button):
             selected_palette = palette_dropdown.get_active_text()
             if selected_palette:
                 Gimp.message(f"Selected palette: {selected_palette}")
-                print(get_palette_colors(selected_palette))
+                palette_colors = get_palette_colors(selected_palette)
+                
+                for color in palette_colors:
+                    rgba = color.get_rgba()  # Get RGBA values as a tuple
+                    Gimp.message(f"Color: R={rgba[0]:.3f}, G={rgba[1]:.3f}, B={rgba[2]:.3f}, A={rgba[3]:.3f}")
+
             else:
                 Gimp.message("No palette selected.")
         else:
@@ -64,11 +70,11 @@ def on_submit_clicked(button):
 
 def on_add_physical_palette_clicked(button):
     Gimp.message("Add Physical Palette button clicked. Opening addPalette dialog...")
-    Gimp.message(sys.executable)
     try:
         DialogManager("addPalette.xml", "addPaletteWindow", {
             "on_close_clicked": on_close_clicked,
-            "on_generate_clicked": on_generate_clicked  # Connect the new handler
+            "on_generate_clicked": on_generate_clicked,
+            "on_save_clicked": on_save_clicked  # Add the save handler here
         }).show()
     except Exception as e:
         Gimp.message(f"Error while opening addPalette dialog: {e}")
@@ -97,7 +103,7 @@ def show_add_palette_dialog():
 
     # Connect signals for the addPalette dialog buttons
     builder.connect_signals({
-        "on_save_clicked": lambda button: on_save_palette(button, builder),
+        "on_save_clicked": on_save_clicked,
         "on_generate_clicked": lambda button: on_generate_palette(button, builder),
         "on_close_clicked": lambda button: add_palette_dialog.destroy()
     })
@@ -133,6 +139,9 @@ def on_generate_clicked(button):
     # Call the call_llm method with the entry text
     result = llm_palette.call_llm(entry_text)
 
+    # Store the instance in the DialogManager for later access
+    builder.llm_palette_instance = llm_palette
+
     # Check if the result is an instance of LLMPhysicalPalette
     if isinstance(result, LLMPhysicalPalette):
         # Get the GtkTextView to display the response
@@ -149,3 +158,29 @@ def on_generate_clicked(button):
         Gimp.message(f"Palette saved: {result}")
     else:
         Gimp.message(result)  # Handle error message
+
+def on_save_clicked(button):
+    Gimp.message("Save button clicked. This function is being called.")
+
+    # Retrieve the builder instance for addPaletteWindow
+    builder = DialogManager.dialogs.get("addPaletteWindow")
+    if builder is None:
+        Gimp.message("DialogManager did not provide a valid builder for addPaletteWindow.")
+        return
+
+    # Access the stored LLMPhysicalPalette instance
+    llm_palette = getattr(builder, 'llm_palette_instance', None)
+    if llm_palette is None:
+        Gimp.message("No LLMPhysicalPalette instance found. Please generate a palette first.")
+        return
+
+    # Prepare the palette data
+    palette_data = {
+        "name": llm_palette.physical_palette_name,
+        "colors": llm_palette.colors_listed,
+        "num_colors": llm_palette.num_colors,
+        "additional_notes": llm_palette.additional_notes,
+    }
+
+    # Save the palette data using the utility function
+    save_json_to_file(palette_data, palette_data['name'])
