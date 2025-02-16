@@ -9,7 +9,7 @@ class Message(BaseModel):
 class BaseLLM(BaseModel):
     model: str
     temperature: float = 0.0
-    top_k: int = 10
+    top_k: Optional[int] = 10
     api_key: Optional[str] = None
     api_url: str
     
@@ -17,7 +17,7 @@ class BaseLLM(BaseModel):
                  model: str,
                  api_url: str,
                  temperature: float = 0.0, 
-                 top_k: int = 10,
+                 top_k: Optional[int] = 10,
                  api_key: Optional[str] = None):
         super().__init__(
             model=model,
