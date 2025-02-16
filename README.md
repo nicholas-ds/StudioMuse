@@ -6,6 +6,7 @@ StudioMuse is a GIMP plugin-based application designed to enhance artistic workf
 
 The integrated LLM also gives advice and insights into how to use the colors in your physical palette. Perplexity Sonar is used for this as their sonar model has built-in web search functionality that will be important for identifying particular physical palettes.
 
+
 ## Current Development
 
 ### Features

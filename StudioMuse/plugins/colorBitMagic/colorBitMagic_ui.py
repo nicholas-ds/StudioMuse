@@ -8,6 +8,7 @@ from gi.repository import Gtk
 from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error, get_palette_colors, save_palette_to_file, save_json_to_file, populate_physical_palette_dropdown, load_physical_palette_data
 from ui.dialogManager import DialogManager
 from llm.LLMPhysicalPalette import LLMPhysicalPalette
+from llm.PaletteDemistifyerLLM import PaletteDemistifyerLLM
 
 # Global variable to keep track of the dmMain dialog
 dm_main_dialog = None
@@ -87,7 +88,16 @@ def on_submit_clicked(button):
                 "gimp_palette_colors": rgb_palette_colors,
                 "physical_palette_data": physical_palette_data["colors"]
             }
-            Gimp.message(f"All data: {all_data}")
+            
+            # Create an instance of PaletteDemistifyerLLM and call the LLM
+            demystifyer = PaletteDemistifyerLLM()
+            result = demystifyer.call_llm(all_data)
+
+            if isinstance(result, PaletteDemistifyerLLM):
+                Gimp.message("Analysis complete! Here are the results:")
+                Gimp.message(json.dumps(result.analysis_result, indent=2))
+            else:
+                Gimp.message(f"Error during analysis: {result}")
 
         else:
             Gimp.message("Please select both a GIMP palette and a physical palette.")
