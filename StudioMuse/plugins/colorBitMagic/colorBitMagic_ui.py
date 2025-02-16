@@ -5,7 +5,7 @@ import json
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
 from gi.repository import Gtk
-from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error, get_palette_colors, save_palette_to_file, save_json_to_file, populate_physical_palette_dropdown
+from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap, log_error, get_palette_colors, save_palette_to_file, save_json_to_file, populate_physical_palette_dropdown, load_physical_palette_data
 from ui.dialogManager import DialogManager
 from llm.LLMPhysicalPalette import LLMPhysicalPalette
 
@@ -37,36 +37,63 @@ def on_palette_demystifyer_clicked(button):
 
 
 def on_submit_clicked(button):
-    Gimp.message("Submit button clicked. Logging selected palette...")
+    Gimp.message("Submit button clicked. Loading selected palettes...")
 
     try:
-        Gimp.message("Entered on_submit_clicked function.")
-
         # Retrieve the builder instance from the DialogManager
         builder = DialogManager.dialogs.get("dmMainWindow")
         if builder is None:
             log_error("DialogManager did not provide a valid builder for dmMainWindow.")
             return
 
+        # Get both dropdown selections
         palette_dropdown = builder.builder.get_object("paletteDropdown")
-        if palette_dropdown is not None:
-            # Get the active text from the dropdown
-            selected_palette = palette_dropdown.get_active_text()
-            if selected_palette:
-                Gimp.message(f"Selected palette: {selected_palette}")
-                palette_colors = get_palette_colors(selected_palette)
-                
-                for color in palette_colors:
-                    rgba = color.get_rgba()  # Get RGBA values as a tuple
-                    Gimp.message(f"Color: R={rgba[0]:.3f}, G={rgba[1]:.3f}, B={rgba[2]:.3f}, A={rgba[3]:.3f}")
+        physical_palette_dropdown = builder.builder.get_object("physicalPaletteDropdown")
 
-            else:
-                Gimp.message("No palette selected.")
+        if palette_dropdown is None or physical_palette_dropdown is None:
+            log_error("Could not find dropdowns in the UI. Check XML IDs.")
+            return
+
+        # Get selected values
+        selected_palette = palette_dropdown.get_active_text()
+        selected_physical_palette = physical_palette_dropdown.get_active_text()
+
+        if selected_palette and selected_physical_palette:
+            Gimp.message(f"Selected GIMP palette: {selected_palette}")
+
+            # Load physical palette data
+            physical_palette_data = load_physical_palette_data(selected_physical_palette)
+            if physical_palette_data:
+                Gimp.message(f"Selected physical palette: {selected_physical_palette}")
+                Gimp.message(f"Loaded physical palette data: {json.dumps(physical_palette_data, indent=2)}")
+
+            # Get GIMP palette colors (existing functionality)
+            palette_colors = get_palette_colors(selected_palette)
+            rgb_palette_colors = {}
+            for i, color in enumerate(palette_colors, 1):
+                rgba = color.get_rgba()
+                color_data = {
+                    "R": round(rgba[0], 3),
+                    "G": round(rgba[1], 3),
+                    "B": round(rgba[2], 3),
+                    "A": round(rgba[3], 3)
+                }
+                rgb_palette_colors[f"color{i}"] = color_data
+
+            # Create a dictionary to store all data
+            all_data = {
+                "gimp_palette": selected_palette,
+                "physical_palette": selected_physical_palette,
+                "gimp_palette_colors": rgb_palette_colors,
+                "physical_palette_data": physical_palette_data
+            }
+            Gimp.message(f"All data: {all_data}")
+
         else:
-            log_error("Could not find GtkComboBoxText in the UI. Check XML IDs.")
+            Gimp.message("Please select both a GIMP palette and a physical palette.")
 
     except Exception as e:
-        log_error("Error while logging selected palette", e)
+        log_error("Error while processing selected palettes", e)
 
 def on_add_physical_palette_clicked(button):
     Gimp.message("Add Physical Palette button clicked. Opening addPalette dialog...")

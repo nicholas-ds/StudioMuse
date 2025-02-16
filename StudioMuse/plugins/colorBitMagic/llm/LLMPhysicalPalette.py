@@ -1,14 +1,13 @@
 from pydantic import BaseModel
-import os
-import requests
+from datetime import datetime
+from .perplexity_llm import PerplexityLLM
 from .prompts import add_physical_palette_prompt
 from colorBitMagic_utils import clean_and_verify_json
-from datetime import datetime
 
 class AnswerFormat(BaseModel):
-    colors: list  # Assuming the response will include a list of colors
+    colors: list
 
-class LLMPhysicalPalette(BaseModel):
+class LLMPhysicalPalette(PerplexityLLM):
     physical_palette_name: str = "Default Palette Name"
     colors_listed: list = []
     num_colors: int = 0
@@ -19,38 +18,22 @@ class LLMPhysicalPalette(BaseModel):
     raw_response: dict = {}
 
     def __init__(self, physical_palette_name: str = "Default Palette Name", palette_source: str = "unknown"):
-        super().__init__(physical_palette_name=physical_palette_name, colors_listed=[], num_colors=0, created_date=datetime.now().isoformat(), palette_source=palette_source, raw_response={})
+        super().__init__()
+        self.physical_palette_name = physical_palette_name
+        self.colors_listed = []
+        self.num_colors = 0
+        self.created_date = datetime.now().isoformat()
+        self.palette_source = palette_source
+        self.raw_response = {}
 
     def call_llm(self, entry_text):
         """
-        Queries the Perplexity Sonar API to retrieve physical palette colors.
+        Queries the LLM to retrieve physical palette colors.
         """
         try:
-            url = "https://api.perplexity.ai/chat/completions"
-
-            payload = {
-                "model": "sonar-pro",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": f"{add_physical_palette_prompt}\n\n The user's physical palette is: {entry_text}"
-                    }
-                ],
-                "top_k": 10,
-                "temperature": 0.0,
-            }
-
-            headers = {
-                "Authorization": f"Bearer {os.getenv('PERPLEXITY_KEY')}",
-                "Content-Type": "application/json"
-            }
-
-            response = requests.post(url, json=payload, headers=headers)
-            response.raise_for_status()
-
-            # Extract colors from the response
-            response_data = response.json()
-            self.raw_response = response_data  # Store the raw response
+            prompt = f"{add_physical_palette_prompt}\n\n The user's physical palette is: {entry_text}"
+            response_data = self.call_api(prompt)
+            self.raw_response = response_data
 
             color_json = clean_and_verify_json(response_data['choices'][0]['message']['content'])
             self.colors_listed = color_json['colors']
@@ -64,7 +47,7 @@ class LLMPhysicalPalette(BaseModel):
             return self
 
         except Exception as e:
-            return f"Error sending data to Sonar: {type(e).__name__}: {e}"
+            return f"Error processing LLM response: {type(e).__name__}: {e}"
 
 # Example usage
 def main():

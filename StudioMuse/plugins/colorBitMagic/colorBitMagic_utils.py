@@ -204,3 +204,18 @@ def populate_physical_palette_dropdown(builder):
     palette_files = [os.path.splitext(f)[0] for f in os.listdir(physical_palettes_dir) 
                     if f.endswith('.json')]
     populate_dropdown(builder, "physicalPaletteDropdown", palette_files, "No physical palettes found")
+
+def load_physical_palette_data(palette_name):
+    """Loads physical palette data from a JSON file."""
+    try:
+        # Get GIMP's user data directory
+        gimp_dir = Gimp.directory()
+        file_path = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes", f"{palette_name}.json")
+        
+        with open(file_path, 'r') as f:
+            palette_data = json.load(f)
+        return palette_data
+    except Exception as e:
+        log_error(f"Failed to load physical palette data for '{palette_name}'", e)
+        return None
+    
