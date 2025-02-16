@@ -85,7 +85,7 @@ def on_submit_clicked(button):
                 "gimp_palette": selected_palette,
                 "physical_palette": selected_physical_palette,
                 "gimp_palette_colors": rgb_palette_colors,
-                "physical_palette_data": physical_palette_data
+                "physical_palette_data": physical_palette_data["colors"]
             }
             Gimp.message(f"All data: {all_data}")
 
