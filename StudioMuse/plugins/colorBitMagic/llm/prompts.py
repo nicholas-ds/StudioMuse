@@ -1,6 +1,4 @@
-
 palette_dm_prompt = """
-
 You are an expert in the arts and know everything there is to know about color. Your primary task is to evaluate
 a list of RGB-formatted colors and provide an approximate match to a user-provided physical palette. 
 
@@ -9,17 +7,21 @@ Instructions:
 2. Carefully identify the user's physical palette information
 3. Match the RGB colors to the user's physical palette.
 
-Example Input:
+RGB Colors from GIMP:
+{rgb_colors}
 
+Physical Palette Colors:
+{entry_text}
 
-
-
-(
-            f"Entry Text: {entry_text}\n"
-            f"RGB Colors: {rgb_colors}\n"
-            f"Please provide an analysis or recommendation based on the above data."
-        )
-
+Respond ONLY with a JSON array containing objects with the following structure, and no additional text:
+[
+  {{
+    "gimp_color_name": "string",
+    "rgb_color": "string",
+    "physical_color_name": "string",
+    "mixing_suggestions": "string"
+  }}
+]
 """
 
 add_physical_palette_prompt = """

@@ -19,6 +19,11 @@ class GeminiLLM:
                 model="gemini-2.0-flash",
                 contents=prompt
             )
+            # Add debug print to see full response
+            print("Full Gemini Response:", response)
+            print("Response Text:", response.text)
+            
+            # Just return the raw text - cleaning will be handled by clean_and_verify_json
             return response.text
 
         except Exception as e:

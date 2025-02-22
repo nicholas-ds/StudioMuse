@@ -9,6 +9,7 @@ from colorBitMagic_utils import populate_palette_dropdown, log_palette_colormap,
 from ui.dialogManager import DialogManager
 from llm.LLMPhysicalPalette import LLMPhysicalPalette
 from llm.PaletteDemistifyerLLM import PaletteDemistifyerLLM
+from llm.prompts import palette_dm_prompt
 
 # Global variable to keep track of the dmMain dialog
 dm_main_dialog = None
@@ -55,7 +56,7 @@ def on_submit_clicked(button):
             log_error("Could not find dropdowns in the UI. Check XML IDs.")
             return
 
-        # Get selected values
+        # Get selected values directly from the ComboBoxText widgets
         selected_palette = palette_dropdown.get_active_text()
         selected_physical_palette = physical_palette_dropdown.get_active_text()
 
@@ -83,19 +84,36 @@ def on_submit_clicked(button):
 
             # Create a dictionary to store all data
             all_data = {
-                "gimp_palette": selected_palette,
-                "physical_palette": selected_physical_palette,
                 "gimp_palette_colors": rgb_palette_colors,
                 "physical_palette_data": physical_palette_data["colors"]
             }
             
             # Create an instance of PaletteDemistifyerLLM and call the LLM
-            demystifyer = PaletteDemistifyerLLM()
-            result = demystifyer.call_llm(all_data)
+            demystifyer = PaletteDemistifyerLLM(gimp_palette_colors=all_data["gimp_palette_colors"], 
+                                               physical_palette_data=all_data["physical_palette_data"])
+            result = demystifyer.call_llm()
 
-            if isinstance(result, PaletteDemistifyerLLM):
-                Gimp.message("Analysis complete! Here are the results:")
-                Gimp.message(json.dumps(result.analysis_result, indent=2))
+            if isinstance(result, list):  # Check if result is a list of color matches
+                # Get the TextView widget
+                text_view = builder.builder.get_object("resultTextView")
+                if text_view is None:
+                    log_error("Could not find TextView in the UI.")
+                    return
+
+                # Format the results for display
+                display_text = "Color Matching Results:\n\n"
+                for match in result:
+                    display_text += f"GIMP Color: {match['gimp_color_name']}\n"
+                    display_text += f"RGB Values: {match['rgb_color']}\n"
+                    display_text += f"Physical Color: {match['physical_color_name']}\n"
+                    display_text += f"Mixing Tips: {match['mixing_suggestions']}\n"
+                    display_text += "-" * 40 + "\n\n"
+
+                # Update the TextView
+                text_buffer = text_view.get_buffer()
+                text_buffer.set_text(display_text)
+                
+                Gimp.message("Analysis complete! Results displayed in the dialog.")
             else:
                 Gimp.message(f"Error during analysis: {result}")
 
