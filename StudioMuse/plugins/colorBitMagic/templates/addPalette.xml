@@ -52,7 +52,7 @@
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="label" translatable="yes">Describe Your Palette</property>
+                        <property name="label" translatable="yes">Physical Palette Name</property>
                       </object>
                       <packing>
                         <property name="resize">False</property>
@@ -67,6 +67,7 @@
                         <property name="margin-end">5</property>
                         <property name="margin-top">5</property>
                         <property name="margin-bottom">5</property>
+                        <property name="placeholder-text" translatable="yes">ex. Mont Marte 52 piece soft oil pastel kit</property>
                       </object>
                       <packing>
                         <property name="resize">False</property>

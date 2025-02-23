@@ -6,12 +6,11 @@ StudioMuse is a GIMP plugin-based application designed to enhance artistic workf
 
 The integrated LLM also gives advice and insights into how to use the colors in your physical palette. Perplexity Sonar is used for this as their sonar model has built-in web search functionality that will be important for identifying particular physical palettes.
 
-
 ## Current Development
 
 ### Features
 
-- **colorBitMagic Plugin**: 
+- **colorBitMagic Plugin**:
   - Extracts color data from user-created palettes.
   - Sends color data to the Perplexity Sonar API for color matching and art tips.
   - Integrates with GIMP's palette editor for enhanced user interaction.
@@ -58,7 +57,7 @@ This is a tool that will help you approximate the colors in your physical art pa
 ### Step 1: Create a physical palette
 
 1. Click "Add Physical Palette" button.
-2. In the dialog that appears, describe the art kit you are using. It is helpful to include the brand, number of items in the set, and (if the kit has it) the names of the kit itself. 
+2. In the dialog that appears, describe the art kit you are using. It is helpful to include the brand, number of items in the set, and (if the kit has it) the names of the kit itself.
  ex. "Mont Marte 52 Piece Oil Pastel Kit"
 3. Click "generate", wait for LLM response.
 4. The LLM will return a list of colors that are in the physical palette.
@@ -68,23 +67,45 @@ This is a tool that will help you approximate the colors in your physical art pa
 
 1. Once you have saved at least one physical palette, navigate to the home page of the Palette Demystifyer function.
 2. Select the GIMP palette you generated earlier in the first palette dropdown.
-3. Select the physical paletted you saved in the previous step. 
-4. Click "Submit", wait for LLM response. 
-5. The LLM will return the list of colors in your GIMP palette, matched with the closest physical palette color in your set. 
+3. Select the physical paletted you saved in the previous step.
+4. Click "Submit", wait for LLM response.
+5. The LLM will return the list of colors in your GIMP palette, matched with the closest physical palette color in your set.
 
-Future development will include a nicer UI for displaying the result of this process so you don't have to keep the window open to see the results. For now the LLM will respond and display the reults in the GIMP console. The GIMP console can be added via the arrow button on the rop right, above the GIMP control panel. By default, the control panel holds your layers tab. 
+Future development will include a nicer UI for displaying the result of this process so you don't have to keep the window open to see the results. For now the LLM will respond and display the results in the GIMP console. The GIMP console can be added via the arrow button on the top right, above the GIMP control panel. By default, the control panel holds your layers tab.
 
 "Menu Arrow" > Add Tab > Error Console
 
 ## Future Development
 
-- **Enhanced AI Integration**: Integrate a vision model for features such as segmentation and automated manipulations. 
-- **User Interface Improvements**: 
+- **2D Image to 3D Object Conversion**: We are exploring the integration of AI-driven depth estimation and 3D reconstruction models into GIMP. This feature would allow artists to generate 3D representations from 2D reference images, facilitating better visualization for painting, sculpture, and digital modeling. Possible implementations include:
+  - Depth map generation from 2D images.
+  - AI-assisted mesh reconstruction.
+  - Exporting generated 3D models in formats like OBJ for use in external applications.
+  - **Hunyuan 3D-2 Integration**: We plan to incorporate Tencent’s Hunyuan 3D-2, an AI-driven 3D model generation tool that efficiently reconstructs 3D structures from 2D images. This will allow for more accurate and detailed transformations with minimal user intervention.
+
+- **Enhanced AI Integration**: Integrate a vision model for features such as segmentation and automated manipulations.
+  - **Google Vision API Integration**: Implementing Google Vision API for advanced image recognition, object detection, and enhanced color matching capabilities to refine the accuracy of extracted palette data.
+
+- **User Interface Improvements**:
   - Develop a more intuitive UI for palette matching results
   - Better integration with GIMP's native interface
   - Add visual color swatches for matched colors
-- **Cross-Platform Support**: Long term goal is to integrate with Blender for 3D modeling generation and enhanced reference image manipulations. 
+
+- **Cross-Platform Support**: Long term goal is to integrate with Blender for 3D modeling generation and enhanced reference image manipulations.
+
+- **2D Image to 3D Object Conversion**: We are exploring the integration of AI-driven depth estimation and 3D reconstruction models into GIMP. This feature would allow artists to generate 3D representations from 2D reference images, facilitating better visualization for painting, sculpture, and digital modeling. Possible implementations include:
+  - Depth map generation from 2D images.
+  - AI-assisted mesh reconstruction.
+  - Exporting generated 3D models in formats like OBJ for use in external applications.
+
+- **Enhanced AI Integration**: Integrate a vision model for features such as segmentation and automated manipulations.
+- **User Interface Improvements**:
+  - Develop a more intuitive UI for palette matching results
+  - Better integration with GIMP's native interface
+  - Add visual color swatches for matched colors
+- **Cross-Platform Support**: Long term goal is to integrate with Blender for 3D modeling generation and enhanced reference image manipulations.
 
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file.
+

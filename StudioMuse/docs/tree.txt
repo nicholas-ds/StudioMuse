@@ -1,65 +1,51 @@
-StudioMuse/
+NickSmay@MacBookAir StudioMuse % tree
+.
 ├── LICENSE
 ├── README.md
-├── ProjectOverview.md
-├── requirements.txt
-├── errorLog.txt
-├── assets/                        # (Static assets like icons, reference images)
-├── scripts/                       # (Utility scripts for installation, testing, etc.)
-│   ├── install.sh                 # (Installation script)
-│   ├── update.sh                  # (Potential auto-updater)
-│   ├── test_plugin.sh              # (Script to test the plugin)
-│   ├── debug.py                    # (Automated debugging script)
-│   └── generate_docs.py             # (Automated doc generation script)
-│
-├── backend/                        # (Handles logic outside of GIMP UI)
-│   ├── __init__.py
-│   ├── api/                        # (API layer for external services, LLM, etc.)
-│   │   ├── __init__.py
-│   │   ├── llm_api.py              # (Handles LLM requests)
-│   │   ├── color_matching.py        # (Processes colors for matching)
-│   │   ├── palette_analysis.py      # (Processes palettes)
-│   ├── data/                        # (Handles data storage, caching)
-│   │   ├── __init__.py
-│   │   ├── cache_manager.py         # (Cache for responses & palettes)
-│   │   ├── file_manager.py          # (Handles file read/write operations)
-│   ├── config.py                    # (Stores global settings, API keys, paths)
-│
-├── plugins/                         # (All GIMP plugins live here)
-│   ├── install.sh                   # (Script to install all plugins)
-│   ├── colorBitMagic/               # (First plugin: Color analysis & palettes)
-│   │   ├── __init__.py
-│   │   ├── colorBitMagic.py         # (Main plugin entry point)
-│   │   ├── dialogs/                 # (Encapsulated UI components)
-│   │   │   ├── homeDialog/          # (Encapsulated Home UI)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── homeDialog.xml
-│   │   │   │   ├── home_ui.py
-│   │   │   │   ├── home_signals.py
-│   │   │   │   ├── home_utils.py
-│   │   │   ├── dmMain/              # (Palette Demystifier UI)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── dmMain.xml
-│   │   │   │   ├── dm_ui.py
-│   │   │   │   ├── dm_signals.py
-│   │   │   │   ├── dm_utils.py
-│   │   │   ├── addPalette/          # (Add Palette UI)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── addPalette.xml
-│   │   │   │   ├── add_ui.py
-│   │   │   │   ├── add_signals.py
-│   │   │   │   ├── add_utils.py
-│   │   ├── utils/                   # (Shared utilities)
-│   │   │   ├── __init__.py
-│   │   │   ├── logging.py
-│   │   │   ├── error_handling.py
-│   │   │   ├── palette_utils.py
-│   │   ├── plugin_factory.py        # (Registers the plugin dynamically)
-│
-└── docs/                            # (Documentation)
-    ├── README.md                    # (Project introduction)
-    ├── setup_guide.md                # (Installation and setup)
-    ├── api_docs.md                    # (API documentation)
-    ├── design_notes.md                # (Architecture and design decisions)
-    ├── testing.md                     # (Guide for testing the plugin)
-    └── contributing.md                 # (Guide for contributing)
+└── StudioMuse
+    ├── docs
+    │   ├── errorLog.txt
+    │   └── tree.txt
+    ├── plugins
+    │   ├── colorBitMagic
+    │   │   ├── __init__.py
+    │   │   ├── __pycache__
+    │   │   │   ├── colorBitMagic_utils.cpython-310.pyc
+    │   │   │   └── colorBitMagic_utils.cpython-312.pyc
+    │   │   ├── assets
+    │   │   │   ├── WizardSecond.png
+    │   │   │   └── wizardLogo.webp
+    │   │   ├── colorBitMagic.py
+    │   │   ├── colorBitMagic_ui.py
+    │   │   ├── colorBitMagic_utils.py
+    │   │   ├── llm
+    │   │   │   ├── LLMPhysicalPalette.py
+    │   │   │   ├── PaletteDemistifyerLLM.py
+    │   │   │   ├── __init__.py
+    │   │   │   ├── __pycache__
+    │   │   │   │   ├── LLMPhysicalPalette.cpython-312.pyc
+    │   │   │   │   ├── __init__.cpython-312.pyc
+    │   │   │   │   └── prompts.cpython-312.pyc
+    │   │   │   ├── base_llm.py
+    │   │   │   ├── call_llm.py
+    │   │   │   ├── gemini_llm.py
+    │   │   │   ├── perplexity_llm.py
+    │   │   │   └── prompts.py
+    │   │   ├── palettes
+    │   │   │   └── Mont Marte Extra Soft Oil Pastels Vibrant Hues Premium 52pc.json
+    │   │   ├── physical_palettes
+    │   │   │   └── Mont Marte Extra Soft Oil Pastels Vibrant Hues Premium 52pc.json
+    │   │   ├── templates
+    │   │   │   ├── addPalette.xml
+    │   │   │   ├── addPalette.xml~
+    │   │   │   ├── dmMain.xml
+    │   │   │   └── homeDialog.xml
+    │   │   ├── testing
+    │   │   │   └── testing.ipynb
+    │   │   └── ui
+    │   │       └── dialogManager.py
+    │   └── install.sh
+    └── requirements.txt
+
+14 directories, 33 files
+NickSma
