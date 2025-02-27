@@ -9,7 +9,7 @@ class GeminiLLM:
     Focused on providing text completion capabilities.
     """
     def __init__(self, 
-                 temperature: float = 0.7, 
+                 temperature: float = 1.0, 
                  model: str = "gemini-2.0-flash", 
                  api_key: Optional[str] = None):
         """

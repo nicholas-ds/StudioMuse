@@ -1,29 +1,27 @@
 from pydantic import BaseModel
 from datetime import datetime
-from .perplexity_llm import PerplexityLLM
 from .prompts import add_physical_palette_prompt
 from colorBitMagic_utils import clean_and_verify_json
 
 class AnswerFormat(BaseModel):
     colors: list
 
-class LLMPhysicalPalette(PerplexityLLM):
-    physical_palette_name: str = "Default Palette Name"
-    colors_listed: list = []
-    num_colors: int = 0
-    llm_num_colors: int = 0
-    created_date: str = datetime.now().isoformat()
-    palette_source: str = "unknown"
-    additional_notes: str = ""
-    raw_response: dict = {}
-
+class LLMPhysicalPalette:
     def __init__(self, physical_palette_name: str = "Default Palette Name", palette_source: str = "unknown"):
-        super().__init__()
+        # Import locally to avoid circular imports
+        from .perplexity_llm import PerplexityLLM
+        
+        # Create LLM instance (composition instead of inheritance)
+        self.llm = PerplexityLLM()
+        
+        # Initialize properties
         self.physical_palette_name = physical_palette_name
         self.colors_listed = []
         self.num_colors = 0
+        self.llm_num_colors = 0
         self.created_date = datetime.now().isoformat()
         self.palette_source = palette_source
+        self.additional_notes = ""
         self.raw_response = {}
 
     def call_llm(self, entry_text):
@@ -31,11 +29,17 @@ class LLMPhysicalPalette(PerplexityLLM):
         Queries the LLM to retrieve physical palette colors.
         """
         try:
+            # Format the prompt
             prompt = f"{add_physical_palette_prompt}\n\n The user's physical palette is: {entry_text}"
-            response_data = self.call_api(prompt)
+            
+            # Call the API using the LLM instance
+            response_data = self.llm.call_api(prompt)
             self.raw_response = response_data
 
+            # Process the response
             color_json = clean_and_verify_json(response_data['choices'][0]['message']['content'])
+            
+            # Update instance properties
             self.colors_listed = color_json['colors']
             self.llm_num_colors = color_json['piece_count']
             self.num_colors = len(self.colors_listed)
