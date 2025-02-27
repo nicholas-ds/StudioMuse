@@ -1,46 +1,61 @@
 import os
 from google import genai
-from typing import Dict, Any
+from google.genai import types
+from typing import Dict, Any, Optional
 
 class GeminiLLM:
-    def __init__(self, temperature: float = 0.7):
-        # Get API key from environment
-        api_key = os.getenv('GEMINI_API_KEY')
-        if not api_key:
-            raise Exception("GEMINI_API_KEY environment variable is not set")
+    """
+    Simple wrapper for Google Gemini API. 
+    Focused on providing text completion capabilities.
+    """
+    def __init__(self, 
+                 temperature: float = 0.7, 
+                 model: str = "gemini-2.0-flash", 
+                 api_key: Optional[str] = None):
+        """
+        Initialize the Gemini LLM client.
+        
+        Args:
+            temperature: Controls randomness in response (0.0-1.0)
+            model: Gemini model to use
+            api_key: Optional API key (defaults to GEMINI_API_KEY env variable)
+        """
+        # Get API key from parameter or environment
+        self.api_key = api_key or os.getenv('GEMINI_API_KEY')
+        if not self.api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is not set")
+        
+        # Store parameters
+        self.model = model
+        self.temperature = temperature
         
         # Initialize client
-        self.client = genai.Client(api_key=api_key)
-        self.temperature = temperature
+        self.client = genai.Client(api_key=self.api_key)
 
     def call_api(self, prompt: str) -> str:
+        """
+        Call the Gemini API with a prompt and return the text response.
+        
+        Args:
+            prompt: Text prompt to send to the API
+            
+        Returns:
+            String containing the text response
+            
+        Raises:
+            Exception: If API call fails
+        """
         try:
             response = self.client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=self.temperature
+                )
             )
-            # Add debug print to see full response
-            print("Full Gemini Response:", response)
-            print("Response Text:", response.text)
             
-            # Just return the raw text - cleaning will be handled by clean_and_verify_json
+            # Return just the text response - parsing will be handled elsewhere
             return response.text
 
         except Exception as e:
             raise Exception(f"Error calling Gemini API: {type(e).__name__}: {e}")
-
-# Test entry point
-if __name__ == "__main__":
-    try:
-        # Create instance
-        llm = GeminiLLM()
-        
-        # Test simple prompt
-        test_prompt = "What is the meaning of life in 10 words or less?"
-        print(f"\nTesting with prompt: {test_prompt}")
-        
-        result = llm.call_api(test_prompt)
-        print(f"\nResult: {result}")
-        
-    except Exception as e:
-        print(f"Error during test: {str(e)}")
