@@ -1,4 +1,4 @@
-from ui.dialogManager import DialogManager
+from .dialog_manager import DialogManager
 
 class BaseDialog:
     def __init__(self, ui_file, window_id):

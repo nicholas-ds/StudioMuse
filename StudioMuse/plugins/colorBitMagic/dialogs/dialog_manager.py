@@ -8,8 +8,8 @@ from colorBitMagic_utils import log_error
 class DialogManager:
     """Handles loading, displaying, and managing any GIMP dialog dynamically."""
     
-    gtk_running = False  # Tracks if Gtk.main() is running
-    dialogs = {}  # Stores open dialogs
+    gtk_running = False
+    dialogs = {} 
 
     def __init__(self, ui_file, window_id, signal_handlers=None):
         """
@@ -23,10 +23,9 @@ class DialogManager:
         self.window_id = window_id
         self.builder = Gtk.Builder()
 
-        # Load the XML UI file
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        xml_path = os.path.join(script_dir, "../templates", ui_file)  # Go up one level and into templates
-        xml_path = os.path.abspath(xml_path)  # Ensure absolute path
+        xml_path = os.path.join(script_dir, "../templates", ui_file)
+        xml_path = os.path.abspath(xml_path)
 
         Gimp.message(f"Loading UI file from: {xml_path}")
 
@@ -36,26 +35,21 @@ class DialogManager:
             log_error(f"Error loading UI file: {ui_file}", e)
             return
 
-        # Get the main dialog window
         self.dialog = self.builder.get_object(window_id)
         if self.dialog is None:
             log_error(f"Could not find '{window_id}' in {ui_file}.")
             return
         
         self.dialog.set_position(Gtk.WindowPosition.CENTER) 
+        self.__class__.dialogs[window_id] = self
 
-        # Store dialog reference
-        self.__class__.dialogs[window_id] = self  # Store entire DialogManager instance
-
-        # ✅ Merge default signals with user-provided signals
         default_signals = {
-            "on_exit_clicked": self.on_exit_clicked  # Automatically attach exit handler
+            "on_exit_clicked": self.on_exit_clicked
         }
 
         if signal_handlers:
-            default_signals.update(signal_handlers)  # Merge with custom handlers
+            default_signals.update(signal_handlers)
 
-        # ✅ Connect all signals dynamically
         self.builder.connect_signals(default_signals)
         
         Gimp.message(f"Connected signals for {window_id}")
