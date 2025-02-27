@@ -124,47 +124,13 @@ def on_submit_clicked(button):
         log_error("Error while processing selected palettes", e)
 
 def on_add_physical_palette_clicked(button):
+    """Opens the Add Physical Palette dialog."""
     Gimp.message("Add Physical Palette button clicked. Opening addPalette dialog...")
-    try:
-        DialogManager("addPalette.xml", "addPaletteWindow", {
-            "on_close_clicked": on_close_clicked,
-            "on_generate_clicked": on_generate_clicked,
-            "on_save_clicked": on_save_clicked  # Add the save handler here
-        }).show()
-    except Exception as e:
-        Gimp.message(f"Error while opening addPalette dialog: {e}")
-
-def on_close_clicked(button):
-    """Handles the close button click by only closing the dialog."""
-    Gimp.message("Closing addPalette dialog.")
-    button.get_toplevel().destroy()
-
-def show_add_palette_dialog():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    xml_path = os.path.join(script_dir, "templates/addPalette.xml")
-
-    builder = Gtk.Builder()
-    try:
-        builder.add_from_file(xml_path)
-        Gimp.message("addPalette UI file loaded successfully.")
-    except Exception as e:
-        log_error(f"Error loading addPalette UI file from {xml_path}", e)
-        return
-
-    add_palette_dialog = builder.get_object("addPaletteWindow")
-    if add_palette_dialog is None:
-        log_error("Could not find addPaletteWindow in the XML file. Check the ID.")
-        return
-
-    # Connect signals for the addPalette dialog buttons
-    builder.connect_signals({
-        "on_save_clicked": on_save_clicked,
-        "on_generate_clicked": lambda button: on_generate_palette(button, builder),
-        "on_close_clicked": lambda button: add_palette_dialog.destroy()
-    })
-
-    Gimp.message("addPaletteWindow found, displaying dialog.")
-    add_palette_dialog.show_all()
+    DialogManager("addPalette.xml", "addPaletteWindow", {
+        "on_close_clicked": lambda button: button.get_toplevel().destroy(),
+        "on_generate_clicked": on_generate_clicked,
+        "on_save_clicked": on_save_clicked
+    }).show()
 
 def on_generate_clicked(button):
     Gimp.message("Generate button clicked. Sending text to LLM...")
