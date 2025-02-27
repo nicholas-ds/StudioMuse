@@ -1,10 +1,8 @@
+# llm/base_llm.py (updated)
 from pydantic import BaseModel
 import os
+import requests
 from typing import Dict, Any, Optional, List
-
-class Message(BaseModel):
-    role: str
-    content: str
 
 class BaseLLM(BaseModel):
     model: str
@@ -64,6 +62,16 @@ class BaseLLM(BaseModel):
 
     def call_api(self, prompt: str) -> Dict[str, Any]:
         """
-        Generic method to call the LLM API
+        Generic method to call the LLM API with standard error handling.
         """
-        raise NotImplementedError("Subclasses must implement call_api method")
+        try:
+            payload = self.prepare_payload(prompt)
+            headers = self.prepare_headers()
+            
+            response = requests.post(self.api_url, json=payload, headers=headers)
+            response.raise_for_status()
+            
+            return self.parse_response(response.json())
+
+        except Exception as e:
+            raise Exception(f"Error calling API: {type(e).__name__}: {e}")

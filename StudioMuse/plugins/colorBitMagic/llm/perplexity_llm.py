@@ -1,7 +1,7 @@
+# llm/perplexity_llm.py (updated)
 import os
-import requests
-from .base_llm import BaseLLM
 from typing import Dict, Any
+from .base_llm import BaseLLM
 
 class PerplexityLLM(BaseLLM):
     def __init__(self, 
@@ -17,19 +17,7 @@ class PerplexityLLM(BaseLLM):
         )
         
     def prepare_payload(self, prompt: str) -> Dict[str, Any]:
+        """Override to include Perplexity-specific parameters."""
         payload = super().prepare_payload(prompt)
         payload["top_k"] = self.top_k  # Perplexity-specific parameter
         return payload
-
-    def call_api(self, prompt: str) -> Dict[str, Any]:
-        try:
-            payload = self.prepare_payload(prompt)
-            headers = self.prepare_headers()
-            
-            response = requests.post(self.api_url, json=payload, headers=headers)
-            response.raise_for_status()
-            
-            return self.parse_response(response.json())
-
-        except Exception as e:
-            raise Exception(f"Error calling Perplexity API: {type(e).__name__}: {e}")
