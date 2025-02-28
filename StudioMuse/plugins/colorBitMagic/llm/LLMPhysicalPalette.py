@@ -7,12 +7,30 @@ class AnswerFormat(BaseModel):
     colors: list
 
 class LLMPhysicalPalette:
-    def __init__(self, physical_palette_name: str = "Default Palette Name", palette_source: str = "unknown"):
-        # Import locally to avoid circular imports
-        from .perplexity_llm import PerplexityLLM
+    def __init__(self, physical_palette_name: str = "Default Palette Name", 
+                 palette_source: str = "unknown",
+                 llm_provider: str = "perplexity",
+                 temperature: float = 0.0,
+                 top_k: int = 10):
+        """
+        Initialize a physical palette instance that uses LLM to analyze color data.
         
-        # Create LLM instance (composition instead of inheritance)
-        self.llm = PerplexityLLM()
+        Args:
+            physical_palette_name: Name of the palette
+            palette_source: Source of the palette data (e.g., "user", "perplexity")
+            llm_provider: Name of the LLM provider to use ("perplexity", "gemini")
+            temperature: LLM temperature parameter
+            top_k: LLM top_k parameter (for providers that support it)
+        """
+        # Import locally to avoid circular imports
+        from .llm_service_provider import LLMServiceProvider
+        
+        # Get LLM instance from service provider
+        self.llm = LLMServiceProvider.get_llm(
+            llm_provider, 
+            temperature=temperature,
+            top_k=top_k
+        )
         
         # Initialize properties
         self.physical_palette_name = physical_palette_name
@@ -23,6 +41,9 @@ class LLMPhysicalPalette:
         self.palette_source = palette_source
         self.additional_notes = ""
         self.raw_response = {}
+        
+        # Store the provider for reference
+        self.llm_provider = llm_provider
 
     def call_llm(self, entry_text):
         """
@@ -36,8 +57,14 @@ class LLMPhysicalPalette:
             response_data = self.llm.call_api(prompt)
             self.raw_response = response_data
 
-            # Process the response
-            color_json = clean_and_verify_json(response_data['choices'][0]['message']['content'])
+            # Process the response based on LLM provider
+            if self.llm_provider == "perplexity":
+                content = response_data['choices'][0]['message']['content']
+            else:  # Handle Gemini or other providers
+                content = response_data
+                
+            # Clean and verify JSON from the content
+            color_json = clean_and_verify_json(content)
             
             # Update instance properties
             self.colors_listed = color_json['colors']
@@ -45,31 +72,10 @@ class LLMPhysicalPalette:
             self.num_colors = len(self.colors_listed)
             self.physical_palette_name = color_json['set_name']
             self.additional_notes = color_json['additional_notes']
-            self.palette_source = "Perplexity"
+            self.palette_source = self.llm_provider
             self.created_date = datetime.now().isoformat()
 
             return self
 
         except Exception as e:
             return f"Error processing LLM response: {type(e).__name__}: {e}"
-
-# Example usage
-def main():
-    # Example entry text and palette name
-    entry_text = "Example palette entry text"
-    palette_name = "My Physical Palette"
-
-    llm_palette = LLMPhysicalPalette(physical_palette_name=palette_name, palette_source="user")
-    result = llm_palette.call_llm(entry_text)
-
-    if isinstance(result, LLMPhysicalPalette):
-        print("Palette Name:", result.physical_palette_name)
-        print("Colors Listed:", result.colors_listed)
-        print("Number of Colors:", result.num_colors)
-        print("Created Date:", result.created_date)
-        print("Palette Source:", result.palette_source)
-    else:
-        print(result)
-
-if __name__ == "__main__":
-    main()

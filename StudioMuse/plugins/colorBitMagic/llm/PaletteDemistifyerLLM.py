@@ -3,12 +3,33 @@ import json
 from gi.repository import Gimp
 
 class PaletteDemistifyerLLM:
-    def __init__(self, gimp_palette_colors: dict, physical_palette_data: dict):
-        # Import here to avoid circular imports
-        from .gemini_llm import GeminiLLM
+    def __init__(self, gimp_palette_colors: dict, physical_palette_data: dict,
+                 llm_provider: str = "gemini", temperature: float = 0.7):
+        """
+        Initialize the palette demystifier that compares GIMP palettes to physical palettes.
         
-        # Create the LLM instance (composition instead of inheritance)
-        self.llm = GeminiLLM(temperature=0.7)
+        Args:
+            gimp_palette_colors: Dictionary of GIMP palette colors
+            physical_palette_data: Dictionary of physical palette data
+            llm_provider: The LLM provider to use (default: "gemini")
+            temperature: LLM temperature parameter
+        """
+        # Import here to avoid circular imports
+        from .llm_service_provider import LLMServiceProvider, initialize_llm_providers
+        
+        # Ensure LLM providers are initialized
+        if not LLMServiceProvider._initialized:
+            Gimp.message("Initializing LLM providers from PaletteDemistifyerLLM")
+            initialize_llm_providers()
+        
+        # Get the LLM instance from the service provider
+        self.llm = LLMServiceProvider.get_llm(
+            llm_provider,
+            temperature=temperature
+        )
+        
+        # Store the LLM provider for reference
+        self.llm_provider = llm_provider
         
         # Store the palette data
         self.analysis_result = {}
@@ -49,6 +70,14 @@ class PaletteDemistifyerLLM:
             
             # Call the API using the LLM instance
             response = self.llm.call_api(prompt)
+            
+            # Process the response based on LLM provider
+            # For gemini, the response is already the text content
+            if self.llm_provider != "gemini":
+                # For other providers like Perplexity, extract the text content
+                # This would need to be adjusted based on the actual provider's response format
+                if isinstance(response, dict) and "choices" in response:
+                    response = response['choices'][0]['message']['content']
             
             # Clean and verify the response
             self.analysis_result = self.clean_and_verify_json(response)
