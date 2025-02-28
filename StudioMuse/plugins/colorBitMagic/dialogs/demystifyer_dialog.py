@@ -96,16 +96,17 @@ class DemystifyerDialog(BaseDialog):
                     # Update the TextView
                     text_buffer = text_view.get_buffer()
                     text_buffer.set_text(display_text)
-                    
                     Gimp.message("Analysis complete! Results displayed in the dialog.")
                 else:
                     Gimp.message(f"Error during analysis: {result}")
+                    
 
             else:
                 Gimp.message("Please select both a GIMP palette and a physical palette.")
 
         except Exception as e:
             log_error("Error while processing selected palettes", e)
+            log_error(demystifyer.raw_response)
             
     def on_add_physical_palette_clicked(self, button):
         from .add_palette_dialog import AddPaletteDialog

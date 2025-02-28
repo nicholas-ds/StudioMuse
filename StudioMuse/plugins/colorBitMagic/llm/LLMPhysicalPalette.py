@@ -54,14 +54,16 @@ class LLMPhysicalPalette:
             prompt = f"{add_physical_palette_prompt}\n\n The user's physical palette is: {entry_text}"
             
             # Call the API using the LLM instance
-            response_data = self.llm.call_api(prompt)
-            self.raw_response = response_data
+            response = self.llm.call_api(prompt)
+            self.raw_response = response
 
-            # Process the response based on LLM provider
-            if self.llm_provider == "perplexity":
-                content = response_data['choices'][0]['message']['content']
-            else:  # Handle Gemini or other providers
-                content = response_data
+            # Extract content based on response type
+            if isinstance(response, str):
+                # Gemini returns string directly
+                content = response
+            else:
+                # Other providers return structured response
+                content = response['choices'][0]['message']['content']
                 
             # Clean and verify JSON from the content
             color_json = clean_and_verify_json(content)

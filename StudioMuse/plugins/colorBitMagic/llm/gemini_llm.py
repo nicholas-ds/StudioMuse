@@ -16,7 +16,7 @@ class GeminiLLM(BaseLLM):
                  temperature: float = 1.0, 
                  model: str = "gemini-2.0-flash", 
                  api_key: Optional[str] = None,
-                 max_output_tokens: int = 500):
+                 max_output_tokens: int = 2048):
         """
         Initialize the Gemini LLM client.
         

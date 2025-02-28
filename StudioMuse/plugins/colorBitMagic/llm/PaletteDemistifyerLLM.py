@@ -70,17 +70,17 @@ class PaletteDemistifyerLLM:
             
             # Call the API using the LLM instance
             response = self.llm.call_api(prompt)
+            self.raw_response = response
             
-            # Process the response based on LLM provider
-            # For gemini, the response is already the text content
-            if self.llm_provider != "gemini":
+            # For Gemini, the response is already the text content
+            if isinstance(response, str):
+                content = response
+            else:
                 # For other providers like Perplexity, extract the text content
-                # This would need to be adjusted based on the actual provider's response format
-                if isinstance(response, dict) and "choices" in response:
-                    response = response['choices'][0]['message']['content']
+                content = response['choices'][0]['message']['content']
             
             # Clean and verify the response
-            self.analysis_result = self.clean_and_verify_json(response)
+            self.analysis_result = self.clean_and_verify_json(content)
             return self.analysis_result
 
         except Exception as e:
