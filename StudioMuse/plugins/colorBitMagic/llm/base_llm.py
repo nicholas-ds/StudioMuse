@@ -10,19 +10,22 @@ class BaseLLM(BaseModel):
     top_k: Optional[int] = 10
     api_key: Optional[str] = None
     api_url: str
+    max_output_tokens: Optional[int] = 500
     
     def __init__(self, 
                  model: str,
                  api_url: str,
                  temperature: float = 0.0, 
                  top_k: Optional[int] = 10,
-                 api_key: Optional[str] = None):
+                 api_key: Optional[str] = None,
+                 max_output_tokens: Optional[int] = 500):
         super().__init__(
             model=model,
             temperature=temperature,
             top_k=top_k,
             api_url=api_url,
-            api_key=api_key
+            api_key=api_key,
+            max_output_tokens=max_output_tokens
         )
 
     def prepare_messages(self, prompt: str) -> List[Dict[str, str]]:

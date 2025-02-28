@@ -2,16 +2,21 @@ import os
 from google import genai
 from google.genai import types
 from typing import Dict, Any, Optional
+from .base_llm import BaseLLM
+from pydantic import PrivateAttr
 
-class GeminiLLM:
+class GeminiLLM(BaseLLM):
     """
     Simple wrapper for Google Gemini API. 
     Focused on providing text completion capabilities.
     """
+    _client: Any = PrivateAttr()  # Use PrivateAttr for the genai client
+
     def __init__(self, 
                  temperature: float = 1.0, 
                  model: str = "gemini-2.0-flash", 
-                 api_key: Optional[str] = None):
+                 api_key: Optional[str] = None,
+                 max_output_tokens: int = 500):
         """
         Initialize the Gemini LLM client.
         
@@ -19,42 +24,29 @@ class GeminiLLM:
             temperature: Controls randomness in response (0.0-1.0)
             model: Gemini model to use
             api_key: Optional API key (defaults to GEMINI_API_KEY env variable)
+            max_output_tokens: Maximum number of tokens to generate
         """
-        # Get API key from parameter or environment
-        self.api_key = api_key or os.getenv('GEMINI_API_KEY')
-        if not self.api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is not set")
-        
-        # Store parameters
-        self.model = model
-        self.temperature = temperature
-        
-        # Initialize client
-        self.client = genai.Client(api_key=self.api_key)
+        super().__init__(
+            model=model,
+            api_url="",  # Gemini doesn't use a REST API URL
+            temperature=temperature,
+            api_key=api_key or os.getenv('GEMINI_API_KEY'),
+            max_output_tokens=max_output_tokens
+        )
+        # Initialize client as a private attribute
+        self._client = genai.Client(api_key=self.api_key)
 
     def call_api(self, prompt: str) -> str:
-        """
-        Call the Gemini API with a prompt and return the text response.
-        
-        Args:
-            prompt: Text prompt to send to the API
-            
-        Returns:
-            String containing the text response
-            
-        Raises:
-            Exception: If API call fails
-        """
+        """Override the base call_api method since Gemini uses a different API pattern"""
         try:
-            response = self.client.models.generate_content(
+            response = self._client.models.generate_content(
                 model=self.model,
-                contents=prompt,
+                contents=[prompt],  # Wrap prompt in a list as per API guidelines
                 config=types.GenerateContentConfig(
+                    max_output_tokens=self.max_output_tokens,
                     temperature=self.temperature
                 )
             )
-            
-            # Return just the text response - parsing will be handled elsewhere
             return response.text
 
         except Exception as e:
