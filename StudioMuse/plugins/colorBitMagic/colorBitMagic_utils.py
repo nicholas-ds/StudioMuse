@@ -6,14 +6,7 @@ import json
 import os
 
 from utils.palette_models import PaletteData, PhysicalPalette, ColorData
-from utils.palette_processor import PaletteProcessor
-
-def log_error(message, exception=None):
-    """Helper function to log errors with optional exception details."""
-    if exception:
-        Gimp.message(f"Error: {message} - Exception: {exception}")
-    else:
-        Gimp.message(f"Error: {message}")
+from utils.palette_processor import PaletteProcessor, log_error
 
 def populate_dropdown(builder, dropdown_id, items, error_message="No items found"):
     """
@@ -175,26 +168,11 @@ def gimp_palette_to_palette_data(palette_name):
         return None
 
 def get_all_physical_palettes():
-    """Returns a list of all available physical palettes."""
-    try:
-        # Get GIMP's user data directory
-        gimp_dir = Gimp.directory()
-        plugin_data_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
-        
-        # If directory doesn't exist, return empty list
-        if not os.path.exists(plugin_data_dir):
-            return []
-        
-        # Get all JSON files in the directory
-        palette_files = [f for f in os.listdir(plugin_data_dir) if f.endswith('.json')]
-        
-        # Extract palette names (remove .json extension)
-        palette_names = [os.path.splitext(f)[0] for f in palette_files]
-        
-        return sorted(palette_names)
-    except Exception as e:
-        log_error("Failed to get physical palettes", e)
-        return []
+    """
+    Returns a list of all available physical palettes.
+    Legacy wrapper around PaletteProcessor.get_all_physical_palettes.
+    """
+    return PaletteProcessor.get_all_physical_palettes()
 
 def clean_and_verify_json(json_string):
     """
@@ -219,7 +197,7 @@ def clean_and_verify_json(json_string):
         return {"error": str(e)}
 
 def save_palette_to_file(llm_palette):
-    """Saves the LLMPhysicalPalette instance to a JSON file."""
+    """Saves the LLMPhysicalPalette instance to a JSON file using PaletteProcessor."""
     try:
         # Check if we have new style palette or old dict format
         if hasattr(llm_palette, 'to_dict'):
@@ -250,23 +228,46 @@ def save_palette_to_file(llm_palette):
         log_error("Failed to save palette to file", e)
 
 def save_json_to_file(data, filename):
-    """Saves a given data dictionary to a JSON file in GIMP's plugin directory."""
+    """
+    Saves a given data dictionary to a JSON file in GIMP's plugin directory.
+    Legacy method - now wraps around PaletteProcessor.save_palette.
+    """
     try:
-        # Get GIMP's user data directory
-        gimp_dir = Gimp.directory()  # This gets GIMP's user data directory
-        
-        # Create a directory for our plugin data if it doesn't exist
-        plugin_data_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
-        os.makedirs(plugin_data_dir, exist_ok=True)
-        
-        # Create the full file path
-        file_path = os.path.join(plugin_data_dir, f"{filename}.json")
-        
-        # Save the file
-        with open(file_path, "w") as f:
-            json.dump(data, f, indent=4)  # Use indent for pretty printing
-        
-        Gimp.message(f"Data saved successfully to '{file_path}'.")
+        # Convert to a PaletteData object
+        if "name" not in data:
+            data["name"] = filename
+            
+        # Create a list of ColorData objects from the colors list if it exists
+        colors = []
+        if "colors" in data and isinstance(data["colors"], list):
+            for i, color_name in enumerate(data["colors"]):
+                colors.append(ColorData(
+                    name=color_name,
+                    hex_value="#000000"  # Default since we don't have hex values
+                ))
+                
+        # Create the palette object
+        if "source" in data or "additional_notes" in data:
+            # Physical palette
+            palette = PhysicalPalette(
+                name=data["name"],
+                colors=colors,
+                source=data.get("source", "unknown"),
+                additional_notes=data.get("additional_notes", "")
+            )
+        else:
+            # Regular palette
+            palette = PaletteData(
+                name=data["name"],
+                colors=colors,
+                description=data.get("description", "")
+            )
+            
+        # Save using PaletteProcessor
+        filepath = PaletteProcessor.save_palette(palette, f"{filename}.json")
+        if filepath:
+            Gimp.message(f"Data saved successfully to '{filepath}'.")
+            
     except Exception as e:
         log_error(f"Failed to save data to file '{filename}.json'", e)
 
@@ -277,22 +278,17 @@ def populate_palette_dropdown(builder):
 
 def populate_physical_palette_dropdown(builder):
     """Populates the physical palette dropdown."""
-    physical_palettes_dir = os.path.join(os.path.dirname(__file__), "physical_palettes")
-    palette_files = [os.path.splitext(f)[0] for f in os.listdir(physical_palettes_dir) 
-                    if f.endswith('.json')]
-    populate_dropdown(builder, "physicalPaletteDropdown", palette_files, "No physical palettes found")
+    physical_palettes = get_all_physical_palettes()
+    populate_dropdown(builder, "physicalPaletteDropdown", physical_palettes, "No physical palettes found")
 
 def load_physical_palette_data(palette_name):
-    """Loads physical palette data from a JSON file."""
+    """
+    Loads physical palette data from a JSON file.
+    Legacy method - now wraps around PaletteProcessor.load_palette.
+    """
     try:
-        # Handle legacy format - check if this is a direct file path
-        if palette_name.endswith('.json'):
-            filename = palette_name
-        else:
-            filename = palette_name
-            
         # Use PaletteProcessor to load the palette
-        palette = PaletteProcessor.load_palette(filename)
+        palette = PaletteProcessor.load_palette(palette_name)
         
         if palette:
             # For backward compatibility, return as dict

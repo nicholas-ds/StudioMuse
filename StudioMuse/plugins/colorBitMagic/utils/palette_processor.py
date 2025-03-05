@@ -109,4 +109,28 @@ class PaletteProcessor:
             return ColorData(name=name, hex_value=hex_value, rgb=rgb)
         except Exception as e:
             log_error(f"Failed to convert Gegl.Color to ColorData", e)
-            return ColorData(name=name, hex_value="#000000", rgb={"r": 0, "g": 0, "b": 0}) 
+            return ColorData(name=name, hex_value="#000000", rgb={"r": 0, "g": 0, "b": 0})
+            
+    @staticmethod
+    def get_all_physical_palettes(base_dir: str = None) -> list:
+        """Returns a list of all available physical palettes."""
+        try:
+            if base_dir is None:
+                # Get GIMP's user data directory
+                gimp_dir = Gimp.directory()
+                base_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+            
+            # If directory doesn't exist, return empty list
+            if not os.path.exists(base_dir):
+                return []
+            
+            # Get all JSON files in the directory
+            palette_files = [f for f in os.listdir(base_dir) if f.endswith('.json')]
+            
+            # Extract palette names (remove .json extension)
+            palette_names = [os.path.splitext(f)[0] for f in palette_files]
+            
+            return sorted(palette_names)
+        except Exception as e:
+            log_error("Failed to get physical palettes", e)
+            return [] 

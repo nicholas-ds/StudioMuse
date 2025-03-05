@@ -14,13 +14,11 @@ def show_color_bit_magic_dialog():
 # Add utility functions that can be used by dialog handlers
 def get_available_palettes():
     """Get lists of both GIMP and physical palettes."""
-    from colorBitMagic_utils import get_all_physical_palettes
-    
     # Get GIMP palettes
     gimp_palettes = Gimp.list_palettes()
     
-    # Get physical palettes
-    physical_palettes = get_all_physical_palettes()
+    # Get physical palettes - now uses PaletteProcessor directly
+    physical_palettes = PaletteProcessor.get_all_physical_palettes()
     
     return {
         "gimp_palettes": gimp_palettes,
