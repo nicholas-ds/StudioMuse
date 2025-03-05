@@ -37,11 +37,24 @@ class GeminiLLM(BaseLLM):
         self._client = genai.Client(api_key=self.api_key)
 
     def call_api(self, prompt: str) -> str:
-        """Override the base call_api method since Gemini uses a different API pattern"""
+        """
+        Override the base call_api method since Gemini uses a different API pattern.
+        Instead of REST API calls, this implementation uses Google's genai client library
+        which handles authentication and API interaction differently.
+        
+        Args:
+            prompt: The input text to send to Gemini
+            
+        Returns:
+            str: The generated text response
+            
+        Raises:
+            Exception: If there's an error calling the Gemini API
+        """
         try:
             response = self._client.models.generate_content(
                 model=self.model,
-                contents=[prompt],  # Wrap prompt in a list as per API guidelines
+                contents=[prompt], 
                 config=types.GenerateContentConfig(
                     max_output_tokens=self.max_output_tokens,
                     temperature=self.temperature
