@@ -69,11 +69,11 @@ class LLMPhysicalPalette:
             color_json = clean_and_verify_json(content)
             
             # Update instance properties
-            self.colors_listed = color_json['colors']
-            self.llm_num_colors = color_json['piece_count']
+            self.colors_listed = color_json.get('colors', [])
+            self.llm_num_colors = color_json.get('piece_count', 0)
             self.num_colors = len(self.colors_listed)
-            self.physical_palette_name = color_json['set_name']
-            self.additional_notes = color_json['additional_notes']
+            self.physical_palette_name = color_json.get('set_name', 'Unknown Palette')
+            self.additional_notes = color_json.get('additional_notes', '')
             self.palette_source = self.llm_provider
             self.created_date = datetime.now().isoformat()
 

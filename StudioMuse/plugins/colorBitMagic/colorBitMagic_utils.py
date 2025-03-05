@@ -5,6 +5,9 @@ from gi.repository import Gimp, Gtk, Gegl
 import json
 import os
 
+from utils.palette_models import PaletteData, PhysicalPalette, ColorData
+from utils.palette_processor import PaletteProcessor
+
 def log_error(message, exception=None):
     """Helper function to log errors with optional exception details."""
     if exception:
@@ -133,42 +136,116 @@ def get_palette_colors(palette_name):
 
     return colors
 
-def clean_and_verify_json(response_str):
+def gimp_palette_to_palette_data(palette_name):
+    """Converts a GIMP palette to our PaletteData model."""
+    try:
+        # Retrieve the palette by name
+        palette = Gimp.Palette.get_by_name(palette_name)
+        
+        if not palette:
+            Gimp.message(f"Palette '{palette_name}' not found.")
+            return None
+
+        # Retrieve all colors in the palette
+        gimp_colors = palette.get_colors()
+        
+        if not gimp_colors:
+            Gimp.message(f"No colors found in palette '{palette_name}'.")
+            return None
+            
+        # Convert colors to our model
+        colors = []
+        for i, color in enumerate(gimp_colors):
+            if isinstance(color, Gegl.Color):
+                color_data = PaletteProcessor.convert_gegl_to_color_data(
+                    color, 
+                    name=f"Color {i+1}"
+                )
+                colors.append(color_data)
+        
+        # Create and return PaletteData object
+        return PaletteData(
+            name=palette_name,
+            colors=colors,
+            description=f"GIMP palette: {palette_name}"
+        )
+        
+    except Exception as e:
+        log_error(f"Error converting GIMP palette to PaletteData", e)
+        return None
+
+def get_all_physical_palettes():
+    """Returns a list of all available physical palettes."""
+    try:
+        # Get GIMP's user data directory
+        gimp_dir = Gimp.directory()
+        plugin_data_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+        
+        # If directory doesn't exist, return empty list
+        if not os.path.exists(plugin_data_dir):
+            return []
+        
+        # Get all JSON files in the directory
+        palette_files = [f for f in os.listdir(plugin_data_dir) if f.endswith('.json')]
+        
+        # Extract palette names (remove .json extension)
+        palette_names = [os.path.splitext(f)[0] for f in palette_files]
+        
+        return sorted(palette_names)
+    except Exception as e:
+        log_error("Failed to get physical palettes", e)
+        return []
+
+def clean_and_verify_json(json_string):
     """
-    Converts a JSON-like string from the LLM into a Python dictionary.
-
-    Args:
-        response_str (str): The response string from the LLM.
-
-    Returns:
-        dict: A dictionary representing the parsed JSON.
+    Cleans and verifies a JSON string from an LLM response.
+    Works independently of any LLM class, supporting the decoupling effort.
     """
     try:
-        # Replace escaped newlines and unnecessary backslashes
-        cleaned_str = response_str.replace('\\n', '').replace('\\"', '"')
-        
-        # Load as JSON
-        json_data = json.loads(cleaned_str)
-        return json_data
-
-    except json.JSONDecodeError as e:
-        print(f"Failed to parse JSON: {e}")
-        return {}
+        # Remove markdown code block formatting
+        cleaned = json_string.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned.split("```json")[1].strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("```")[1].strip()
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0].strip()
+            
+        # Parse the JSON
+        parsed = json.loads(cleaned)
+        return parsed
+    except Exception as e:
+        log_error("Error parsing JSON from LLM response", e)
+        return {"error": str(e)}
 
 def save_palette_to_file(llm_palette):
     """Saves the LLMPhysicalPalette instance to a JSON file."""
-    palette_data = {
-        "name": llm_palette.physical_palette_name,
-        "colors": llm_palette.colors_listed,
-        "num_colors": llm_palette.num_colors,
-        "additional_notes": llm_palette.additional_notes,
-    }
-    
-    # Save to a JSON file
     try:
-        with open(f"{palette_data['name']}.json", "w") as f:
-            json.dump(palette_data, f)
-        Gimp.message(f"Palette '{palette_data['name']}' saved successfully.")
+        # Check if we have new style palette or old dict format
+        if hasattr(llm_palette, 'to_dict'):
+            # This is already a PaletteData object
+            palette_data = llm_palette
+        else:
+            # Create a PhysicalPalette from the old data format
+            colors = []
+            for color_name in llm_palette.colors_listed:
+                colors.append(ColorData(
+                    name=color_name,
+                    hex_value="#000000"  # Default - we don't have hex in old format
+                ))
+                
+            palette_data = PhysicalPalette(
+                name=llm_palette.physical_palette_name,
+                colors=colors,
+                source=llm_palette.palette_source,
+                additional_notes=llm_palette.additional_notes
+            )
+        
+        # Save using PaletteProcessor
+        filepath = PaletteProcessor.save_palette(palette_data)
+        if filepath:
+            Gimp.message(f"Palette '{palette_data.name}' saved successfully.")
+        
     except Exception as e:
         log_error("Failed to save palette to file", e)
 
@@ -208,13 +285,32 @@ def populate_physical_palette_dropdown(builder):
 def load_physical_palette_data(palette_name):
     """Loads physical palette data from a JSON file."""
     try:
-        # Get GIMP's user data directory
-        gimp_dir = Gimp.directory()
-        file_path = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes", f"{palette_name}.json")
+        # Handle legacy format - check if this is a direct file path
+        if palette_name.endswith('.json'):
+            filename = palette_name
+        else:
+            filename = palette_name
+            
+        # Use PaletteProcessor to load the palette
+        palette = PaletteProcessor.load_palette(filename)
         
-        with open(file_path, 'r') as f:
-            palette_data = json.load(f)
-        return palette_data
+        if palette:
+            # For backward compatibility, return as dict
+            return palette.to_dict()
+        else:
+            # Try legacy loading method as fallback
+            gimp_dir = Gimp.directory()
+            plugin_data_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+            
+            # Try with and without .json extension
+            for test_name in [palette_name, f"{palette_name}.json"]:
+                path = os.path.join(plugin_data_dir, test_name)
+                if os.path.exists(path):
+                    with open(path, 'r') as f:
+                        return json.load(f)
+            
+            log_error(f"Physical palette not found: {palette_name}")
+            return None
     except Exception as e:
         log_error(f"Failed to load physical palette data for '{palette_name}'", e)
         return None
