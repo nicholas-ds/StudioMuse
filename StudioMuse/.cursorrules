@@ -1,3 +1,5 @@
+Focus on small, incremental changes or code reccomendations. Do not make large changes or refactorings without without breaking the code into smaller, more manageable pieces that can be tested incrementally.
+
 This project is all about developing a GIMP plugin that will allow me to integrate an LLM into my artistic process. 
 
 I am building the plugin for GIMP 3.0, which is still in development, but it is very stable and for all intents and purposes is stable. 
