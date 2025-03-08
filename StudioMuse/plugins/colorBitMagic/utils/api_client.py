@@ -1,56 +1,104 @@
 import os
 import requests
-from typing import Dict, Any, Optional
+import json
+import logging
+from typing import Dict, Any, List, Optional
 
-class APIClient:
-    """
-    Client for communicating with the StudioMuse backend API.
-    Uses environment variables for configuration with defaults.
-    """
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class BackendAPIClient:
+    """Client for communicating with the StudioMuse backend API"""
     
-    def __init__(self):
-        self.base_url = os.environ.get("STUDIOMUSE_API_URL", "http://127.0.0.1:8000")
-        self.timeout = int(os.environ.get("STUDIOMUSE_API_TIMEOUT", "10"))
-    
-    def get(self, endpoint: str) -> Dict[str, Any]:
+    def __init__(self, base_url: str = "http://127.0.0.1:8000"):
         """
-        Make a GET request to the API
+        Initialize the API client
         
         Args:
-            endpoint: API endpoint (without leading slash)
-            
-        Returns:
-            Response data as dictionary
+            base_url: Base URL of the backend API
         """
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        self.base_url = base_url
+        logger.info(f"Initialized API client with base URL: {base_url}")
+    
+    def health_check(self) -> Dict[str, Any]:
+        """
+        Check if the backend API is healthy
+        
+        Returns:
+            Dict containing health status and available LLM providers
+        """
         try:
-            response = requests.get(url, timeout=self.timeout)
+            response = requests.get(f"{self.base_url}/health")
             response.raise_for_status()
             return response.json()
-        except requests.RequestException as e:
-            return {"error": str(e)}
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            raise Exception(f"Backend API health check failed: {str(e)}")
     
-    def post(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    def get_config(self) -> Dict[str, Any]:
         """
-        Make a POST request to the API
+        Get the backend configuration
+        
+        Returns:
+            Dict containing backend configuration
+        """
+        try:
+            response = requests.get(f"{self.base_url}/config")
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get config: {e}")
+            raise Exception(f"Failed to get backend config: {str(e)}")
+    
+    def demystify_palette(self, 
+                          gimp_palette_colors: Dict[str, Dict[str, float]],
+                          physical_palette_data: List[str],
+                          llm_provider: str = "gemini",
+                          temperature: float = 0.7) -> Dict[str, Any]:
+        """
+        Send a palette demystification request to the backend
         
         Args:
-            endpoint: API endpoint (without leading slash)
-            data: JSON data to send
+            gimp_palette_colors: Dict of GIMP palette colors
+            physical_palette_data: List of physical palette color names
+            llm_provider: LLM provider to use
+            temperature: Temperature for LLM generation
             
         Returns:
-            Response data as dictionary
+            Dict containing the demystification results
         """
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
         try:
-            response = requests.post(url, json=data, timeout=self.timeout)
+            payload = {
+                "gimp_palette_colors": gimp_palette_colors,
+                "physical_palette_data": physical_palette_data,
+                "llm_provider": llm_provider,
+                "temperature": temperature
+            }
+            
+            logger.info(f"Sending palette demystification request to backend using {llm_provider}")
+            
+            response = requests.post(
+                f"{self.base_url}/palette/demystify",
+                json=payload
+            )
             response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            return {"error": str(e)}
+            
+            result = response.json()
+            
+            if result.get("success"):
+                logger.info("Palette demystification successful")
+                return result
+            else:
+                logger.error(f"Backend returned error: {result.get('error')}")
+                raise Exception(f"Backend API error: {result.get('error')}")
+            
+        except Exception as e:
+            logger.error(f"Failed to demystify palette: {e}")
+            raise Exception(f"Backend API error: {str(e)}")
 
 # Singleton instance
-api_client = APIClient() 
+api_client = BackendAPIClient() 
 
 def test_api_connection():
     """Test connection to the backend API"""

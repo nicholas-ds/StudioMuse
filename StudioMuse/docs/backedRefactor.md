@@ -6,13 +6,16 @@ Based on your existing code and the recommended frontend/backend separation, her
 StudioMuse/
 ├── backend/                      # Backend server for handling LLM interactions
 │   ├── api.py                    # ✅ FastAPI backend entry point
-│   ├── requirements.txt          # ✅ fastapi, uvicorn, requests
+│   ├── requirements.txt          # ✅ fastapi, uvicorn, requests, google-generativeai
+│   ├── test_llm.py               # ✅ Test script for LLM functionality
+│   ├── test_api.py               # ✅ Test script for API endpoints
 │   └── llm/
-│       ├── base_llm.py
-│       ├── gemini_llm.py
-│       ├── perplexity_llm.py
-│       ├── LLMPhysicalPalette.py
-│       └── llm_service_provider.py
+│       ├── __init__.py           # ✅ Module initialization
+│       ├── base_llm.py           # ✅ Base LLM class
+│       ├── gemini_llm.py         # ✅ Gemini implementation
+│       ├── perplexity_llm.py     # ✅ Perplexity implementation
+│       ├── prompts.py            # ✅ LLM prompts
+│       └── llm_service_provider.py # ✅ Factory for LLM instances
 │
 └── plugins/
     └── colorBitMagic/
@@ -42,6 +45,21 @@ StudioMuse/
             └── Mont Marte Extra Soft Oil Pastels Vibrant Hues Premium 52pc.json
 ```
 
+### Incremental Development & Testing Approach
+
+We're following a test-driven, incremental approach to this refactoring:
+
+1. **Incremental Component Migration**: Moving one component at a time from the plugin to the backend
+2. **Comprehensive Test Scripts**: Creating and extending test scripts alongside each component
+3. **Verification Before Proceeding**: Testing each component thoroughly before moving to the next
+4. **Continuous Integration**: Building a suite of tests that can be run to verify the entire system
+
+This approach ensures we:
+- Catch issues early in the development process
+- Maintain a working system throughout the refactoring
+- Have confidence that previous functionality continues to work
+- Create documentation through tests that show how components should be used
+
 ### Step-by-Step Plan for Cross-Platform Refactor (Windows & Mac)
 
 #### 1️⃣ **Separate Frontend & Backend Clearly** - 🟡 In Progress
@@ -49,7 +67,19 @@ StudioMuse/
 - ✅ Create `backend/api.py` with FastAPI server for handling color processing
 - ✅ Set up basic health check and configuration endpoints
 - ✅ Create `plugins/colorBitMagic/utils/api_client.py` for HTTP communication
-- 🔄 Move `llm/` to `backend/` to ensure all LLM processing happens outside GIMP
+- ✅ Create core LLM infrastructure in backend:
+  - ✅ Base LLM class
+  - ✅ LLM Service Provider
+  - ✅ Prompts module
+  - ✅ Test script for LLM components
+- ✅ Implement LLM providers in backend:
+  - ✅ Perplexity LLM
+  - ✅ Gemini LLM
+  - ✅ Extended test script to verify providers
+- ✅ Create API endpoints for palette processing
+  - ✅ Palette demystification endpoint
+  - ✅ Test script for API endpoints
+- 🔄 Update plugin dialogs to use API client instead of direct LLM calls
 - 🔄 Update imports in `colorBitMagic.py` to request data from the backend via HTTP
 
 #### 2️⃣ **Update Plugin Execution Paths** - ⚪ Not Started
@@ -59,7 +89,7 @@ StudioMuse/
   - Mac: `~/Library/Application Support/GIMP/3.0/plug-ins/`
   - Windows: `%APPDATA%\GIMP\3.0\plug-ins\`
 
-#### 3️⃣ **Ensure LLM Dependencies Work on Both OS** - 🟡 In Progress
+#### 3️⃣ **Ensure LLM Dependencies Work on Both OS** - ✅ Completed
 
 - ✅ Create `backend/requirements.txt` with cross-platform dependencies
 - ✅ Use Conda for backend environment:
@@ -75,6 +105,7 @@ StudioMuse/
   source venv/bin/activate
   pip install -r requirements.txt
   ```
+- ✅ Implement comprehensive test scripts to verify functionality
 
 #### 4️⃣ **Fix File System Issues (Windows/Mac Differences)** - ⚪ Not Started
 
@@ -88,6 +119,9 @@ StudioMuse/
   python api.py  # Uses uvicorn internally
   ```
 - ✅ Verify basic API communication with `api_client.py`
+- ✅ Create and run test scripts for backend components:
+  - ✅ `test_llm.py` for LLM functionality
+  - ✅ `test_api.py` for API endpoints
 - 🔄 Test the GIMP plugin with backend communication
 - 🔄 Test JSON saving/loading in `physical_palettes/` on both OS
 
@@ -106,11 +140,32 @@ StudioMuse/
   3. Default configurations (lowest priority)
 - 🔄 Store configuration in platform-appropriate locations:
   - Windows: `%APPDATA%\GIMP\3.0\studiomuse\`
-  - Mac: `~/Library/Application Support/GIMP/3.0/studiomuse/`
+  - Mac: `~/Library/Application Support/GIMP/3.0/studiomuse\`
 - 🔄 Implement configuration UI in the plugin settings
 - 🔄 Add sensitive configuration handling for API keys
 - 🔄 Use dotenv (.env) files for development environments
 - 🔄 Ensure cross-platform compatibility for all configuration paths
+
+### ✅ **Current Progress Summary**
+
+We've made significant progress in the backend refactoring:
+
+1. **Core LLM Infrastructure**: Successfully moved the base LLM class, service provider, and prompts to the backend.
+2. **LLM Providers**: Implemented both Perplexity and Gemini LLM providers in the backend.
+3. **Testing Framework**: Created comprehensive test scripts that grow with each component:
+   - `test_llm.py`: Verifies all LLM functionality
+   - `test_api.py`: Tests API endpoints
+4. **API Foundation**: Set up the basic FastAPI server with health check and configuration endpoints.
+5. **Palette Demystification API**: Successfully implemented and tested the palette demystification endpoint.
+6. **API Client**: Created a client for the plugin to communicate with the backend API.
+7. **Test Provider Support**: Added special handling for test providers in the API to facilitate testing.
+
+### 🔄 **Next Steps**
+
+1. Update the plugin's demystifier dialog to use the API client instead of direct LLM calls
+2. Implement the physical palette creation API endpoint with tests
+3. Update the plugin's add palette dialog to use the API client
+4. Continue with the remaining refactoring tasks for cross-platform compatibility
 
 ### ✅ **Final Outcome**
 
@@ -119,6 +174,7 @@ After completing this refactor, your plugin will:
 - Work seamlessly on both Windows and macOS.
 - Have a clean separation between frontend (GIMP plugin) and backend (LLM processing).
 - Ensure cross-platform compatibility in file handling, dependency management, and execution.
+- Include a comprehensive test suite that verifies all functionality.
 
 Let me know if you need any modifications to this update!
 
