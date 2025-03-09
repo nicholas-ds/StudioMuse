@@ -1,7 +1,6 @@
 from datetime import datetime
 import json
 from gi.repository import Gimp
-from colorBitMagic_utils import clean_and_verify_json
 
 class PaletteDemistifyerLLM:
     def __init__(self, gimp_palette_colors=None, physical_palette_data=None,
@@ -13,14 +12,6 @@ class PaletteDemistifyerLLM:
         Supports both old and new parameter formats:
         - Old: gimp_palette_colors (dict), physical_palette_data (dict)
         - New: gimp_palette_name (str), physical_palette_name (str)
-        
-        Args:
-            gimp_palette_colors: Dictionary of GIMP palette colors (legacy)
-            physical_palette_data: Dictionary of physical palette data (legacy)
-            gimp_palette_name: Name of the GIMP palette (new)
-            physical_palette_name: Name of the physical palette (new)
-            llm_provider: The LLM provider to use (default: "gemini")
-            temperature: LLM temperature parameter
         """
         # Import here to avoid circular imports
         from .llm_service_provider import LLMServiceProvider
@@ -41,8 +32,17 @@ class PaletteDemistifyerLLM:
             from colorBitMagic_utils import gimp_palette_to_palette_data, load_physical_palette_data
             self.gimp_palette_name = gimp_palette_name
             self.physical_palette_name = physical_palette_name
+            
+            # Load GIMP palette
             self.gimp_palette = gimp_palette_to_palette_data(gimp_palette_name)
-            self.physical_palette = load_physical_palette_data(physical_palette_name)
+            
+            # Load physical palette - handle the case where it returns a string
+            try:
+                self.physical_palette = load_physical_palette_data(physical_palette_name)
+            except Exception as e:
+                Gimp.message(f"Error: Failed to load palette: {physical_palette_name} - Exception: {str(e)}")
+                # Provide a fallback - treat the palette name as the only color
+                self.physical_palette = {"colors": [physical_palette_name]}
         else:
             # Legacy style - use provided data directly
             self.gimp_palette_name = None
@@ -67,7 +67,6 @@ class PaletteDemistifyerLLM:
                 if hasattr(color, 'name') and hasattr(color, 'rgb'):
                     color_info = f"{color.name}: RGB({color.rgb.get('r', 0)}, {color.rgb.get('g', 0)}, {color.rgb.get('b', 0)})"
                     formatted_colors.append(color_info)
-            
             rgb_colors_str = "\n".join(formatted_colors)
         else:
             # Fallback to string representation
@@ -93,7 +92,6 @@ class PaletteDemistifyerLLM:
     def clean_and_verify_json(self, response: str) -> dict:
         """Cleans and verifies the JSON response from the LLM"""
         try:
-            import json
             # Clean the response
             cleaned = (response
                 .replace('```json\n', '')
@@ -109,59 +107,21 @@ class PaletteDemistifyerLLM:
     def call_llm(self):
         """Call the LLM API and process the response"""
         try:
-            # Import at function level to avoid circular imports
-            from colorBitMagic_utils import log_error
-            from gi.repository import Gimp
-            
             # Format the prompt
             prompt = self.format_prompt()
             
-            # Log the prompt for debugging
-            Gimp.message(f"Sending prompt to LLM (first 100 chars): {prompt[:100]}...")
-            
-            # For debugging, save the prompt to a file
-            import os
-            debug_dir = os.path.join(os.path.expanduser("~"), "llm_debug")
-            os.makedirs(debug_dir, exist_ok=True)
-            debug_file = os.path.join(debug_dir, "llm_prompt.txt")
-            with open(debug_file, "w") as f:
-                f.write(prompt)
-            Gimp.message(f"Saved prompt to {debug_file}")
-            
-            # Log the palette data for debugging
-            Gimp.message(f"GIMP palette data type: {type(self.gimp_palette)}")
-            Gimp.message(f"Physical palette data type: {type(self.physical_palette)}")
-            
             # Call the LLM API
-            if self.llm_provider == "gemini":
-                from .gemini_llm import GeminiLLM
-                llm = GeminiLLM(temperature=self.temperature)
-            else:
-                # Default to Gemini
-                from .gemini_llm import GeminiLLM
-                llm = GeminiLLM(temperature=self.temperature)
-            
-            # Call the API
-            response = llm.call_api(prompt)
-            
-            # Save the raw response for debugging
+            response = self.llm.call_api(prompt)
             self.raw_response = response
-            
-            # Log the raw response
-            Gimp.message(f"Raw LLM Response (first 100 chars): {response[:100]}...")
-            
-            # For debugging, save the raw response to a file
-            debug_file = os.path.join(debug_dir, "raw_llm_response.txt")
-            with open(debug_file, "w") as f:
-                f.write(response)
-            Gimp.message(f"Saved raw response to {debug_file}")
             
             # Try to parse the response as JSON
             try:
                 self.analysis_result = self.clean_and_verify_json(response)
                 return self.analysis_result
             except Exception as e:
+                from colorBitMagic_utils import log_error
                 log_error("Failed to parse response as JSON", e)
+                
                 # Return a simplified result with the raw text
                 return {
                     "success": False,

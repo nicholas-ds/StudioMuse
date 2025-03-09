@@ -283,31 +283,40 @@ def populate_physical_palette_dropdown(builder):
 
 def load_physical_palette_data(palette_name):
     """
-    Loads physical palette data from a JSON file.
-    Legacy method - now wraps around PaletteProcessor.load_palette.
+    Load physical palette data from a JSON file.
+    
+    Args:
+        palette_name: Name of the palette to load
+        
+    Returns:
+        Dictionary containing palette data or a list of color names
     """
     try:
-        # Use PaletteProcessor to load the palette
-        palette = PaletteProcessor.load_palette(palette_name)
+        from gi.repository import Gimp
+        import os
+        import json
         
-        if palette:
-            # For backward compatibility, return as dict
-            return palette.to_dict()
-        else:
-            # Try legacy loading method as fallback
-            gimp_dir = Gimp.directory()
-            plugin_data_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
-            
-            # Try with and without .json extension
-            for test_name in [palette_name, f"{palette_name}.json"]:
-                path = os.path.join(plugin_data_dir, test_name)
-                if os.path.exists(path):
-                    with open(path, 'r') as f:
-                        return json.load(f)
-            
-            log_error(f"Physical palette not found: {palette_name}")
-            return None
+        # Get GIMP's user data directory
+        gimp_dir = Gimp.directory()
+        
+        # Construct the path to the physical palette file
+        palette_path = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes", f"{palette_name}.json")
+        
+        # Check if the file exists
+        if not os.path.exists(palette_path):
+            Gimp.message(f"Physical palette file not found: {palette_path}")
+            return {"colors": [palette_name]}
+        
+        # Load the JSON file
+        with open(palette_path, 'r') as f:
+            palette_data = json.load(f)
+        
+        # Return the palette data
+        return palette_data
     except Exception as e:
-        log_error(f"Failed to load physical palette data for '{palette_name}'", e)
-        return None
+        from gi.repository import Gimp
+        # Log the error but don't raise it
+        Gimp.message(f"Error: Failed to load palette: {palette_name} - Exception: {str(e)}")
+        # Return a simple dictionary with the palette name as the only color
+        return {"colors": [palette_name]}
     
