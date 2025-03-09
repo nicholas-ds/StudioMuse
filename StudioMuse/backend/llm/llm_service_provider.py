@@ -47,6 +47,10 @@ class LLMServiceProvider:
     @classmethod
     def _initialize_providers(cls):
         """Initialize the available LLM providers."""
-        # This will be implemented later when we add specific providers
+        from .perplexity_llm import PerplexityLLM
+        from .gemini_llm import GeminiLLM
+        
+        cls.register_provider('perplexity', PerplexityLLM)
+        cls.register_provider('gemini', GeminiLLM)
         cls._initialized = True
-        logger.info("LLM providers initialized (placeholder)") 
+        logger.info("LLM providers initialized") 

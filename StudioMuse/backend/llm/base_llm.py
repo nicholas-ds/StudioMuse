@@ -61,36 +61,45 @@ class BaseLLM(BaseModel):
             "Content-Type": "application/json"
         }
         
-    def call_api(self, prompt: str) -> Dict[str, Any]:
+    def call_api(self, prompt: str) -> str:
         """
-        Call the LLM API
+        Call the API with the given prompt.
         
         Args:
-            prompt: The input text to send to the LLM
+            prompt: The input text to send to the API
             
         Returns:
-            Dict containing the API response
+            str: The generated text response
             
         Raises:
-            NotImplementedError: This method should be implemented by subclasses
+            Exception: If there's an error calling the API
         """
-        # This is a placeholder implementation for testing
         logger.info(f"BaseLLM.call_api called with prompt: {prompt[:50]}...")
-        return {
-            "choices": [
-                {
-                    "message": {
-                        "content": """```json
-{
-  "matches": [
-    {"gimp_color": "color1", "physical_color": "Crimson Red", "confidence": 0.95},
-    {"gimp_color": "color2", "physical_color": "Forest Green", "confidence": 0.92},
-    {"gimp_color": "color3", "physical_color": "Royal Blue", "confidence": 0.98}
-  ],
-  "analysis": "These are test matches from the BaseLLM implementation."
-}
-```"""
-                    }
-                }
-            ]
-        } 
+        payload = self.prepare_payload(prompt)
+        
+        try:
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.api_key}'
+            }
+            
+            response = requests.post(
+                self.api_url,
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            # Extract text from response
+            if 'choices' in result and len(result['choices']) > 0:
+                return result['choices'][0]['message']['content']
+            else:
+                logger.error(f"Unexpected response format: {result}")
+                raise Exception(f"Unexpected response format: {result}")
+                
+        except Exception as e:
+            logger.error(f"Error calling API: {e}")
+            raise Exception(f"Error calling API: {e}") 

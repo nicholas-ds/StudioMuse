@@ -1,6 +1,11 @@
 import os
+import logging
 from typing import Dict, Any
 from .base_llm import BaseLLM
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class PerplexityLLM(BaseLLM):
     def __init__(self, 

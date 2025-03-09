@@ -127,5 +127,38 @@ def run_tests():
     
     return all_passed
 
+def test_live_llm_responses():
+    """Test that we can get actual responses from LLMs."""
+    print("\n==== Testing Live LLM Responses ====")
+    
+    # Test Perplexity if API key is available
+    if os.getenv('PERPLEXITY_KEY'):
+        print("\nTesting Perplexity:")
+        try:
+            perplexity = LLMServiceProvider.get_llm("perplexity", temperature=0.3)
+            response = perplexity.call_api("Respond with one sentence: What is the capital of France?")
+            print(f"Perplexity response: {response.strip()}")
+            assert len(response) > 5, "Response should not be empty or very short"
+            print("✅ Perplexity test passed")
+        except Exception as e:
+            print(f"❌ Perplexity test failed: {e}")
+    else:
+        print("⚠️ Skipping Perplexity test (no API key)")
+    
+    # Test Gemini if API key is available
+    if os.getenv('GEMINI_API_KEY'):
+        print("\nTesting Gemini:")
+        try:
+            gemini = LLMServiceProvider.get_llm("gemini", temperature=0.3)
+            response = gemini.call_api("Respond with one sentence: What is the capital of France?")
+            print(f"Gemini response: {response.strip()}")
+            assert len(response) > 5, "Response should not be empty or very short"
+            print("✅ Gemini test passed")
+        except Exception as e:
+            print(f"❌ Gemini test failed: {e}")
+    else:
+        print("⚠️ Skipping Gemini test (no API key)")
+
 if __name__ == "__main__":
-    run_tests() 
+    run_tests()
+    test_live_llm_responses() 
