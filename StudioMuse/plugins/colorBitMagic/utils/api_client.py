@@ -50,87 +50,72 @@ class BackendAPIClient:
         except Exception as e:
             logger.error(f"Failed to get config: {e}")
             raise Exception(f"Failed to get backend config: {str(e)}")
-    
-    def demystify_palette(self, 
-                          gimp_palette_colors: Dict[str, Dict[str, float]],
-                          physical_palette_data: List[str],
-                          llm_provider: str = "gemini",
-                          temperature: float = 0.7) -> Dict[str, Any]:
+            
+    def demystify_palette(self, gimp_palette_colors, physical_palette_data):
         """
         Send a palette demystification request to the backend
         
         Args:
-            gimp_palette_colors: Dict of GIMP palette colors
+            gimp_palette_colors: Dictionary of GIMP palette colors
             physical_palette_data: List of physical palette color names
-            llm_provider: LLM provider to use
-            temperature: Temperature for LLM generation
             
         Returns:
             Dict containing the demystification results
         """
         try:
+            # Format the request payload according to the API's expected format
+            # Based on test_api.py format
             payload = {
                 "gimp_palette_colors": gimp_palette_colors,
                 "physical_palette_data": physical_palette_data,
-                "llm_provider": llm_provider,
-                "temperature": temperature
+                "llm_provider": "gemini",  # Or get from config
+                "temperature": 0.7
             }
             
-            logger.info(f"Sending palette demystification request to backend using {llm_provider}")
+            logger.info(f"Sending palette demystification request")
+            logger.info(f"Payload: {json.dumps(payload, indent=2)}")
             
-            response = requests.post(
-                f"{self.base_url}/palette/demystify",
-                json=payload
-            )
-            response.raise_for_status()
+            response = requests.post(f"{self.base_url}/palette/demystify", json=payload)
             
-            result = response.json()
-            
-            if result.get("success"):
-                logger.info("Palette demystification successful")
-                return result
-            else:
-                logger.error(f"Backend returned error: {result.get('error')}")
-                raise Exception(f"Backend API error: {result.get('error')}")
-            
+            if response.status_code != 200:
+                logger.error(f"API returned status code: {response.status_code}")
+                logger.error(f"Response content: {response.text}")
+                return {"success": False, "error": f"API error: {response.text}"}
+                
+            return response.json()
         except Exception as e:
-            logger.error(f"Failed to demystify palette: {e}")
-            raise Exception(f"Backend API error: {str(e)}")
+            logger.error(f"Palette demystification failed: {e}")
+            return {"success": False, "error": str(e)}
 
 # Singleton instance
-api_client = BackendAPIClient() 
+api_client = BackendAPIClient()
 
-def test_api_connection():
-    """Test connection to the backend API"""
-    try:
-        response = requests.get("http://127.0.0.1:8000/")
-        if response.status_code == 200:
-            data = response.json()
-            print(f"✓ API connection successful: {data}")
-            return True
-        else:
-            print(f"✗ API returned status code: {response.status_code}")
-            return False
-    except requests.RequestException as e:
-        print(f"✗ Connection error: {e}")
-        return False
-
-def test_config_endpoint():
-    """Test the config endpoint"""
-    try:
-        response = requests.get("http://127.0.0.1:8000/config")
-        if response.status_code == 200:
-            data = response.json()
-            print(f"✓ Config endpoint returned: {data}")
-            return True
-        else:
-            print(f"✗ Config endpoint returned status code: {response.status_code}")
-            return False
-    except requests.RequestException as e:
-        print(f"✗ Connection error: {e}")
-        return False
+def test_demystify_palette():
+    """Test the palette demystification API endpoint"""
+    client = BackendAPIClient()
+    
+    # Test data - match the format in test_api.py
+    gimp_palette_colors = {
+        "color1": {"R": 1.0, "G": 0.0, "B": 0.0, "A": 1.0},
+        "color2": {"R": 0.0, "G": 1.0, "B": 0.0, "A": 1.0},
+        "color3": {"R": 0.0, "G": 0.0, "B": 1.0, "A": 1.0}
+    }
+    
+    physical_palette_data = [
+        "Crimson Red",
+        "Forest Green",
+        "Royal Blue"
+    ]
+    
+    # Call the API
+    result = client.demystify_palette(
+        gimp_palette_colors=gimp_palette_colors,
+        physical_palette_data=physical_palette_data
+    )
+    
+    print("API Response:", result)
+    return result.get("success", False)
 
 if __name__ == "__main__":
-    print("Testing StudioMuse Backend API...")
-    test_api_connection()
-    test_config_endpoint() 
+    success = test_demystify_palette()
+    print(f"Test {'passed' if success else 'failed'}") 

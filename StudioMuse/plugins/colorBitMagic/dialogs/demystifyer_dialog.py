@@ -10,6 +10,7 @@ from colorBitMagic_utils import (
     log_error
 )
 from llm.PaletteDemistifyerLLM import PaletteDemistifyerLLM
+from utils.api_client import BackendAPIClient
 
 class DemystifyerDialog(BaseDialog):
     def __init__(self):
@@ -43,71 +44,123 @@ class DemystifyerDialog(BaseDialog):
             selected_physical_palette = physical_palette_dropdown.get_active_text()
 
             if selected_palette and selected_physical_palette:
-                Gimp.message(f"Selected GIMP palette: {selected_palette}")
-
-                # Load physical palette data
-                physical_palette_data = load_physical_palette_data(selected_physical_palette)
-                if physical_palette_data:
-                    Gimp.message(f"Selected physical palette: {selected_physical_palette}")
-                    Gimp.message(f"Loaded physical palette data: {json.dumps(physical_palette_data, indent=2)}")
-
-                # Get GIMP palette colors
-                palette_colors = get_palette_colors(selected_palette)
-                rgb_palette_colors = {}
-                for i, color in enumerate(palette_colors, 1):
-                    rgba = color.get_rgba()
-                    color_data = {
-                        "R": round(rgba[0], 3),
-                        "G": round(rgba[1], 3),
-                        "B": round(rgba[2], 3),
-                        "A": round(rgba[3], 3)
-                    }
-                    rgb_palette_colors[f"color{i}"] = color_data
-
-                # Create a dictionary to store all data
-                all_data = {
-                    "gimp_palette_colors": rgb_palette_colors,
-                    "physical_palette_data": physical_palette_data["colors"]
-                }
+                # Show loading message
+                Gimp.message(f"Processing palettes: {selected_palette} and {selected_physical_palette}")
                 
-                # Create an instance of PaletteDemistifyerLLM and call the LLM
-                demystifyer = PaletteDemistifyerLLM(
-                    gimp_palette_colors=all_data["gimp_palette_colors"], 
-                    physical_palette_data=all_data["physical_palette_data"]
+                # FALLBACK TO ORIGINAL CODE FOR NOW
+                # This is the code that was working before
+                demystifier = PaletteDemistifyerLLM(
+                    gimp_palette_name=selected_palette,
+                    physical_palette_name=selected_physical_palette
                 )
-                result = demystifyer.call_llm()
-
-                if isinstance(result, list):  # Check if result is a list of color matches
-                    # Get the TextView widget
-                    text_view = self.builder.get_object("resultTextView")
-                    if text_view is None:
-                        log_error("Could not find TextView in the UI.")
+                
+                result = demystifier.call_llm()
+                self.display_results(result)
+                
+                """
+                # NEW CODE: Use API client - COMMENTED OUT UNTIL BACKEND IS FIXED
+                # Get palette data - using the proper methods that return serializable data
+                palette_data = gimp_palette_to_palette_data(selected_palette)
+                if not palette_data:
+                    Gimp.message(f"Failed to load GIMP palette: {selected_palette}")
+                    return
+                
+                # Convert PaletteData to serializable dictionary
+                gimp_palette_colors = {}
+                for color in palette_data.colors:
+                    gimp_palette_colors[color.name] = {
+                        "R": color.rgb["r"] / 255.0,  # Convert to 0-1 range for API
+                        "G": color.rgb["g"] / 255.0,
+                        "B": color.rgb["b"] / 255.0,
+                        "A": 1.0
+                    }
+                
+                # Load physical palette data
+                try:
+                    from utils.palette_processor import PaletteProcessor
+                    physical_palette = PaletteProcessor.load_palette(selected_physical_palette)
+                    if physical_palette and hasattr(physical_palette, 'colors'):
+                        physical_color_names = [color.name for color in physical_palette.colors]
+                    else:
+                        Gimp.message(f"Failed to load physical palette: {selected_physical_palette}")
                         return
-
-                    # Format the results for display
-                    display_text = "Color Matching Results:\n\n"
-                    for match in result:
-                        display_text += f"GIMP Color: {match['gimp_color_name']}\n"
-                        display_text += f"RGB Values: {match['rgb_color']}\n"
-                        display_text += f"Physical Color: {match['physical_color_name']}\n"
-                        display_text += f"Mixing Tips: {match['mixing_suggestions']}\n"
-                        display_text += "-" * 40 + "\n\n"
-
-                    # Update the TextView
-                    text_buffer = text_view.get_buffer()
-                    text_buffer.set_text(display_text)
-                    Gimp.message("Analysis complete! Results displayed in the dialog.")
+                except Exception as e:
+                    log_error(f"Failed to load physical palette: {selected_physical_palette}", e)
+                    Gimp.message(f"Error loading physical palette: {str(e)}")
+                    return
+                
+                client = BackendAPIClient()
+                
+                response = client.demystify_palette(
+                    gimp_palette_colors=gimp_palette_colors,
+                    physical_palette_data=physical_color_names
+                )
+                
+                if response.get("success"):
+                    result = response.get("result")
+                    # Process result same as before
+                    self.display_results(result)
+                    Gimp.message("Successfully demystified palette!")
                 else:
-                    Gimp.message(f"Error during analysis: {result}")
-                    
-
+                    error_msg = response.get("error", "Unknown error")
+                    Gimp.message(f"Error demystifying palette: {error_msg}")
+                """
+                
             else:
                 Gimp.message("Please select both a GIMP palette and a physical palette.")
-
+            
         except Exception as e:
-            log_error("Error while processing selected palettes", e)
-            log_error(demystifyer.raw_response)
+            log_error("Error in demystification", e)
+            Gimp.message(f"Error: {str(e)}")
             
     def on_add_physical_palette_clicked(self, button):
         from .add_palette_dialog import AddPaletteDialog
         AddPaletteDialog().show()
+
+    def display_results(self, result):
+        """Display the demystification results in the UI"""
+        try:
+            from gi.repository import Gimp
+            
+            # Get the text view for displaying results
+            text_view = self.builder.get_object("resultTextView")
+            if not text_view:
+                Gimp.message("Could not find resultTextView in the UI")
+                return
+            
+            # Get the buffer
+            buffer = text_view.get_buffer()
+            
+            # Format the results for display
+            if isinstance(result, list):
+                # Format as a readable list
+                formatted_text = ""
+                for item in result:
+                    if isinstance(item, dict):
+                        gimp_color = item.get("gimp_color_name", "Unknown")
+                        rgb_color = item.get("rgb_color", "Unknown")
+                        physical_color = item.get("physical_color_name", "Unknown")
+                        mixing = item.get("mixing_suggestions", "")
+                        
+                        formatted_text += f"GIMP Color: {gimp_color} ({rgb_color})\n"
+                        formatted_text += f"Physical Match: {physical_color}\n"
+                        if mixing:
+                            formatted_text += f"Mixing Suggestions: {mixing}\n"
+                        formatted_text += "\n"
+                    else:
+                        formatted_text += f"{item}\n"
+            elif isinstance(result, dict) and "raw_text" in result:
+                # Display raw text if JSON parsing failed
+                formatted_text = f"JSON parsing failed. Raw response:\n\n{result['raw_text']}"
+            else:
+                # Format as JSON string with indentation
+                import json
+                formatted_text = json.dumps(result, indent=2)
+            
+            # Set the text in the text view
+            buffer.set_text(formatted_text)
+            
+        except Exception as e:
+            from colorBitMagic_utils import log_error
+            log_error("Error displaying results", e)
+            Gimp.message(f"Error displaying results: {str(e)}")

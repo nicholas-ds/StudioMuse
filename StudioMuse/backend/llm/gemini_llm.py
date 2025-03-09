@@ -1,11 +1,9 @@
 import os
 import logging
-from typing import Dict, Any, Optional
-from .base_llm import BaseLLM
+from typing import Any, Dict, Optional, List
 from pydantic import PrivateAttr
+from .base_llm import BaseLLM
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class GeminiLLM(BaseLLM):
@@ -40,47 +38,45 @@ class GeminiLLM(BaseLLM):
         # Initialize the client
         try:
             from google import genai
-            from google.genai import types
-            
             # Initialize client as a private attribute
             self._client = genai.Client(api_key=self.api_key)
-            self._types = types
             
             logger.info(f"Initialized Gemini LLM with model: {self.model}")
         except ImportError as e:
-            logger.error(f"Failed to import Google Generative AI: {e}")
-            logger.error("Please install the required package: pip install google-generativeai")
-            raise ImportError(f"Failed to import Google Generative AI: {e}. Please install with: pip install google-generativeai")
+            logger.error(f"Failed to import Google Genai: {e}")
+            logger.error("Please install the required package: pip install -q -U google-genai")
+            raise ImportError(f"Failed to import Google Genai: {e}. Please install with: pip install -q -U google-genai")
         except Exception as e:
             logger.error(f"Error initializing Gemini LLM: {e}")
             raise
-
+            
     def call_api(self, prompt: str) -> str:
         """
-        Override the base call_api method since Gemini uses a different API pattern.
-        Instead of REST API calls, this implementation uses Google's genai client library
-        which handles authentication and API interaction differently.
+        Call the Gemini API with the given prompt.
         
         Args:
-            prompt: The input text to send to Gemini
+            prompt: The text prompt to send to the API
             
         Returns:
-            str: The generated text response
-            
-        Raises:
-            Exception: If there's an error calling the Gemini API
+            The generated text response
         """
         try:
-            response = self._client.models.generate_content(
-                model=self.model,
-                contents=[prompt], 
-                config=self._types.GenerateContentConfig(
-                    max_output_tokens=self.max_output_tokens,
-                    temperature=self.temperature
-                )
-            )
+            # Create a generation config
+            generation_config = {
+                "temperature": self.temperature,
+                "max_output_tokens": self.max_output_tokens,
+                "top_p": 0.95,
+                "top_k": 0
+            }
+            
+            # Get the model
+            model = self._client.get_model(self.model)
+            
+            # Generate content
+            response = model.generate_content(prompt, generation_config=generation_config)
+            
+            # Return the text
             return response.text
-
         except Exception as e:
-            logger.error(f"Error calling Gemini API: {type(e).__name__}: {e}")
-            raise Exception(f"Error calling Gemini API: {type(e).__name__}: {e}") 
+            logger.error(f"Error calling Gemini API: {e}")
+            raise 
