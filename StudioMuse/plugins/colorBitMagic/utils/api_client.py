@@ -29,12 +29,33 @@ class BackendAPIClient:
             Dict containing health status and available LLM providers
         """
         try:
-            response = requests.get(f"{self.base_url}/health")
-            response.raise_for_status()
-            return response.json()
+            # Log the attempt
+            logger.info(f"Attempting health check to {self.base_url}/health")
+            
+            # Set a short timeout to fail fast if server is not available
+            response = requests.get(f"{self.base_url}/health", timeout=3)
+            
+            if response.status_code == 200:
+                logger.info(f"Health check successful: {response.status_code}")
+                try:
+                    return response.json()
+                except json.JSONDecodeError:
+                    # If response is not JSON, create a dict with the text
+                    logger.warning(f"Health check response is not JSON: {response.text}")
+                    return {"status": "error", "error": f"Invalid JSON response: {response.text}"}
+            else:
+                logger.error(f"Health check failed with status code: {response.status_code}")
+                return {"status": "error", "error": f"API returned status code: {response.status_code}"}
+                
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection error during health check: {e}")
+            return {"status": "error", "error": "Connection refused. Is the backend server running?"}
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout during health check: {e}")
+            return {"status": "error", "error": "Connection timed out. Backend server may be unresponsive."}
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
-            raise Exception(f"Backend API health check failed: {str(e)}")
+            logger.error(f"Unexpected error during health check: {e}")
+            return {"status": "error", "error": str(e)}
     
     def get_config(self) -> Dict[str, Any]:
         """
@@ -56,24 +77,50 @@ class BackendAPIClient:
         Send a palette demystification request to the backend
         
         Args:
-            gimp_palette_colors: Dictionary of GIMP palette colors
+            gimp_palette_colors: List of GIMP palette colors
             physical_palette_data: List of physical palette color names
             
         Returns:
             Dict containing the demystification results
         """
         try:
+            # Convert GIMP palette colors to a serializable format
+            serializable_colors = {}
+            
+            # Process list of colors
+            for i, color in enumerate(gimp_palette_colors):
+                # Use index as name if no name is provided
+                name = f"Color {i+1}"
+                
+                # Check if it's a Color object with rgb attribute
+                if hasattr(color, 'rgb'):
+                    serializable_colors[name] = {
+                        "R": color.rgb.get('r', 0),
+                        "G": color.rgb.get('g', 0),
+                        "B": color.rgb.get('b', 0),
+                        "A": 1.0
+                    }
+                # Check if it's a tuple/list of color values
+                elif isinstance(color, (list, tuple)) and len(color) >= 3:
+                    serializable_colors[name] = {
+                        "R": color[0],
+                        "G": color[1],
+                        "B": color[2],
+                        "A": color[3] if len(color) > 3 else 1.0
+                    }
+                else:
+                    # Use a default color (black)
+                    serializable_colors[name] = {"R": 0, "G": 0, "B": 0, "A": 1.0}
+            
             # Format the request payload according to the API's expected format
-            # Based on test_api.py format
             payload = {
-                "gimp_palette_colors": gimp_palette_colors,
+                "gimp_palette_colors": serializable_colors,
                 "physical_palette_data": physical_palette_data,
                 "llm_provider": "gemini",  # Or get from config
                 "temperature": 0.7
             }
             
             logger.info(f"Sending palette demystification request")
-            logger.info(f"Payload: {json.dumps(payload, indent=2)}")
             
             response = requests.post(f"{self.base_url}/palette/demystify", json=payload)
             
@@ -81,8 +128,18 @@ class BackendAPIClient:
                 logger.error(f"API returned status code: {response.status_code}")
                 logger.error(f"Response content: {response.text}")
                 return {"success": False, "error": f"API error: {response.text}"}
-                
-            return response.json()
+            
+            try:
+                return response.json()
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse API response as JSON: {e}")
+                logger.error(f"Raw response: {response.text}")
+                return {
+                    "success": False, 
+                    "error": f"Failed to parse API response as JSON: {str(e)}",
+                    "raw_response": response.text
+                }
+            
         except Exception as e:
             logger.error(f"Palette demystification failed: {e}")
             return {"success": False, "error": str(e)}
@@ -95,11 +152,11 @@ def test_demystify_palette():
     client = BackendAPIClient()
     
     # Test data - match the format in test_api.py
-    gimp_palette_colors = {
-        "color1": {"R": 1.0, "G": 0.0, "B": 0.0, "A": 1.0},
-        "color2": {"R": 0.0, "G": 1.0, "B": 0.0, "A": 1.0},
-        "color3": {"R": 0.0, "G": 0.0, "B": 1.0, "A": 1.0}
-    }
+    gimp_palette_colors = [
+        {"R": 1.0, "G": 0.0, "B": 0.0, "A": 1.0},
+        {"R": 0.0, "G": 1.0, "B": 0.0, "A": 1.0},
+        {"R": 0.0, "G": 0.0, "B": 1.0, "A": 1.0}
+    ]
     
     physical_palette_data = [
         "Crimson Red",

@@ -38,6 +38,7 @@ class GeminiLLM(BaseLLM):
         # Initialize the client
         try:
             from google import genai
+            from google.genai import types
             # Initialize client as a private attribute
             self._client = genai.Client(api_key=self.api_key)
             
@@ -61,19 +62,23 @@ class GeminiLLM(BaseLLM):
             The generated text response
         """
         try:
-            # Create a generation config
-            generation_config = {
-                "temperature": self.temperature,
-                "max_output_tokens": self.max_output_tokens,
-                "top_p": 0.95,
-                "top_k": 0
-            }
+            # Import here to avoid circular imports
+            from google.genai import types
             
-            # Get the model
-            model = self._client.get_model(self.model)
+            # Create a generation config
+            generation_config = types.GenerateContentConfig(
+                temperature=self.temperature,
+                max_output_tokens=self.max_output_tokens,
+                top_p=0.95,
+                top_k=0
+            )
             
             # Generate content
-            response = model.generate_content(prompt, generation_config=generation_config)
+            response = self._client.models.generate_content(
+                model=self.model,
+                contents=[prompt], 
+                config=generation_config
+            )
             
             # Return the text
             return response.text

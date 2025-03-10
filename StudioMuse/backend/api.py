@@ -5,8 +5,12 @@ from typing import Dict, Any, List, Optional
 import logging
 import json
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging with more detail
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
@@ -59,62 +63,37 @@ def get_config():
 @app.post("/palette/demystify")
 def palette_demystify(request: PaletteDemystifyRequest):
     """Process a palette demystification request"""
+    logger.info("=== RECEIVED PALETTE DEMYSTIFY REQUEST ===")
+    logger.info(f"GIMP Colors: {len(request.gimp_palette_colors)} colors")
+    logger.info(f"Physical Colors: {len(request.physical_palette_data)} colors")
+    logger.info(f"LLM Provider: {request.llm_provider}")
+    
     try:
-        logger.info(f"Received palette demystification request using provider: {request.llm_provider}")
+        # Get LLM instance
+        llm = LLMServiceProvider.get_llm(
+            request.llm_provider, 
+            temperature=request.temperature
+        )
+        logger.info(f"Using LLM: {request.llm_provider}")
         
-        # Special handling for test-provider
-        if request.llm_provider == "test-provider":
-            llm = LLMServiceProvider.get_llm(
-                request.llm_provider,
-                model="test-model",
-                api_url="https://example.com/api",
-                temperature=request.temperature
-            )
-        else:
-            # For other providers
-            llm = LLMServiceProvider.get_llm(
-                request.llm_provider,
-                temperature=request.temperature
-            )
-        
-        # Format the prompt with the palette data
+        # Format the prompt
         prompt = palette_dm_prompt.format(
             rgb_colors=json.dumps(request.gimp_palette_colors, indent=2),
             entry_text=json.dumps(request.physical_palette_data, indent=2)
         )
+        logger.info("Prompt formatted successfully")
         
-        # Call the LLM API
-        response = llm.call_api(prompt)
+        # Call LLM
+        logger.info("Calling LLM API...")
+        content = llm.call_api(prompt)
+        logger.info("LLM API call completed")
         
-        # Process the response based on LLM provider
-        if isinstance(response, str):
-            # For Gemini
-            content = response
-        else:
-            # For other providers like Perplexity
-            content = response['choices'][0]['message']['content']
-        
-        # Clean and parse JSON
-        cleaned = (content
-            .replace('```json\n', '')
-            .replace('```', '')
-            .strip())
-        
-        try:
-            result = json.loads(cleaned)
-            
-            return {
-                "success": True,
-                "result": result,
-                "provider": request.llm_provider
-            }
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response as JSON: {e}")
-            return {
-                "success": False,
-                "error": "Failed to parse LLM response as JSON",
-                "raw_response": content
-            }
+        # Return the raw response without any processing
+        return {
+            "success": True,
+            "raw_response": content,
+            "provider": request.llm_provider
+        }
         
     except Exception as e:
         logger.error(f"Error in palette demystification: {str(e)}")
