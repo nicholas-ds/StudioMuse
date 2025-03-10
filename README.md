@@ -25,7 +25,7 @@ The integrated LLM also gives advice and insights into how to use the colors in 
 1. Ensure GIMP 3.x is installed.
 2. Clone the repository:
    ```bash
-   git clone https://github.com/[username]/StudioMuse.git
+   git clone https://github.com/nicholas-ds/StudioMuse.git
    ```
 3. Navigate to the `StudioMuse/plugins` directory and run the installation script:
    ```bash
