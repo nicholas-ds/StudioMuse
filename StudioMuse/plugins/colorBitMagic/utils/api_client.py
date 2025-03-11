@@ -77,40 +77,34 @@ class BackendAPIClient:
         Send a palette demystification request to the backend
         
         Args:
-            gimp_palette_colors: List of GIMP palette colors
+            gimp_palette_colors: List of GIMP palette colors (Gegl.Color objects)
             physical_palette_data: List of physical palette color names
             
         Returns:
             Dict containing the demystification results
         """
         try:
+            # Import the palette processor here to avoid circular imports
+            from .palette_processor import PaletteProcessor
+            
             # Convert GIMP palette colors to a serializable format
             serializable_colors = {}
             
-            # Process list of colors
+            # Process list of colors using the palette processor
             for i, color in enumerate(gimp_palette_colors):
                 # Use index as name if no name is provided
                 name = f"Color {i+1}"
                 
-                # Check if it's a Color object with rgb attribute
-                if hasattr(color, 'rgb'):
-                    serializable_colors[name] = {
-                        "R": color.rgb.get('r', 0),
-                        "G": color.rgb.get('g', 0),
-                        "B": color.rgb.get('b', 0),
-                        "A": 1.0
-                    }
-                # Check if it's a tuple/list of color values
-                elif isinstance(color, (list, tuple)) and len(color) >= 3:
-                    serializable_colors[name] = {
-                        "R": color[0],
-                        "G": color[1],
-                        "B": color[2],
-                        "A": color[3] if len(color) > 3 else 1.0
-                    }
-                else:
-                    # Use a default color (black)
-                    serializable_colors[name] = {"R": 0, "G": 0, "B": 0, "A": 1.0}
+                # Convert Gegl.Color to ColorData using the existing utility function
+                color_data = PaletteProcessor.convert_gegl_to_color_data(color, name)
+                
+                # Format for the API payload
+                serializable_colors[name] = {
+                    "R": color_data.rgb["r"] / 255.0,  # Convert back to 0-1 range
+                    "G": color_data.rgb["g"] / 255.0,
+                    "B": color_data.rgb["b"] / 255.0,
+                    "A": 1.0
+                }
             
             # Format the request payload according to the API's expected format
             payload = {
@@ -130,6 +124,7 @@ class BackendAPIClient:
                 return {"success": False, "error": f"API error: {response.text}"}
             
             try:
+                # Parse the JSON response instead of returning the raw response object
                 return response.json()
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse API response as JSON: {e}")

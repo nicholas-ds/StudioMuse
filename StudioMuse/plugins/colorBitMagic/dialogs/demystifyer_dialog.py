@@ -105,8 +105,8 @@ class DemystifyerDialog(BaseDialog):
                         response = {"success": False, "error": f"Unexpected response type: {type(response).__name__}"}
                     
                     if response.get("success"):
-                        result = response.get("result")
-                        Gimp.message(f"API request successful! Received {len(result)} matches.")
+                        result = response.get("raw_response")
+                        Gimp.message(f"API request successful! Received response from {response.get('provider', 'unknown')} provider.")
                         self.display_results(result)
                         return
                     else:
