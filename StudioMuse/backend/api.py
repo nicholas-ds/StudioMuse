@@ -88,7 +88,6 @@ def palette_demystify(request: PaletteDemystifyRequest):
         content = llm.call_api(prompt)
         logger.info("LLM API call completed")
         
-        # Return the raw response without any processing
         return {
             "success": True,
             "raw_response": content,

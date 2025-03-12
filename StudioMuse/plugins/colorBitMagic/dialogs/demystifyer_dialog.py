@@ -97,42 +97,36 @@ class DemystifyerDialog(BaseDialog):
                         physical_palette_data=physical_color_names
                     )
                     
-                    # Debug the response
-                    if isinstance(response, dict):
-                        Gimp.message(f"API response (dict): success={response.get('success', False)}")
-                    else:
-                        Gimp.message(f"API response (not dict): {response}")
+                    # Process API response
+                    if not isinstance(response, dict):
+                        Gimp.message(f"Unexpected response format: {type(response).__name__}")
                         response = {"success": False, "error": f"Unexpected response type: {type(response).__name__}"}
                     
                     if response.get("success"):
+                        # Handle successful API response
                         result = response.get("raw_response")
-                        Gimp.message(f"API request successful! Received response from {response.get('provider', 'unknown')} provider.")
+                        provider = response.get("provider", "unknown")
+                        Gimp.message(f"API request successful! Received response from {provider} provider.")
                         self.display_results(result)
                         return
                     else:
+                        # Handle API error
                         error_msg = response.get("error", "Unknown error")
-                        Gimp.message(f"API error: {error_msg}. Falling back to local processing...")
+                        Gimp.message(f"API error: {error_msg}. Unable to process palette.")
                 else:
+                    # Handle failed health check
                     error_msg = health_check.get("error", "Unknown error")
-                    Gimp.message(f"Backend API not available: {error_msg}. Using local LLM processing...")
+                    Gimp.message(f"Backend API not available: {error_msg}. Please try again later.")
+                    return
             
             except Exception as e:
                 import traceback
                 tb = traceback.format_exc()
-                Gimp.message(f"API communication error: {str(e)}. Using local LLM processing...")
+                Gimp.message(f"API communication error: {str(e)}. Unable to process palette.")
                 from colorBitMagic_utils import log_error
                 log_error("API communication error", e)
                 log_error("Traceback", tb)
-            
-            # Fallback to local LLM processing
-            Gimp.message("Using local LLM for palette processing...")
-            demystifier = PaletteDemistifyerLLM(
-                gimp_palette_name=selected_palette,
-                physical_palette_name=selected_physical_palette
-            )
-            
-            result = demystifier.call_llm()
-            self.display_results(result)
+                return
             
         except Exception as e:
             from colorBitMagic_utils import log_error

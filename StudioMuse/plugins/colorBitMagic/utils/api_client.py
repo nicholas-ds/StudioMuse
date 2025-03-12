@@ -124,7 +124,7 @@ class BackendAPIClient:
                 return {"success": False, "error": f"API error: {response.text}"}
             
             try:
-                # Parse the JSON response instead of returning the raw response object
+                # Parse the JSON response
                 return response.json()
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse API response as JSON: {e}")
