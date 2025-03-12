@@ -107,8 +107,10 @@ class DemystifyerDialog(BaseDialog):
                         result = response.get("response")
                         provider = response.get("provider", "unknown")
                         Gimp.message(f"API request successful! Received response from {provider} provider.")
-                        Gimp.message(f"This is the result: {result}")
-                        self.display_results(result, "resultTextView")
+                        
+                        # Format the result for display
+                        formatted_result = format_palette_mapping(result)
+                        self.display_results(formatted_result, "resultTextView")
                         return
                     else:
                         # Handle API error
@@ -137,3 +139,70 @@ class DemystifyerDialog(BaseDialog):
     def on_add_physical_palette_clicked(self, button):
         from .add_palette_dialog import AddPaletteDialog
         AddPaletteDialog().show()
+
+def format_palette_mapping(result):
+    """
+    Format palette mapping data into a readable text format.
+    
+    Args:
+        result: The palette mapping data (string or object)
+        
+    Returns:
+        Formatted string for display
+    """
+    # If result is already a string, use it directly
+    if isinstance(result, str):
+        # Try to parse as JSON
+        try:
+            data = json.loads(result)
+        except:
+            # If parsing fails, just return a cleaned version of the original string
+            return clean_json_string(result)
+    else:
+        # Already an object
+        data = result
+    
+    # Build formatted output
+    formatted_text = "PALETTE MAPPING RESULTS\n"
+    formatted_text += "======================\n\n"
+    
+    # Process each color mapping
+    for item in data:
+        name = item.get("gimp_color_name", "Unknown")
+        rgb = item.get("rgb_color", "N/A")
+        physical_name = item.get("physical_color_name", "Unknown")
+        mix_suggestion = item.get("mixing_suggestions", "N/A")
+        
+        formatted_text += f"{name} ({physical_name}): {rgb}\n"
+        if mix_suggestion and mix_suggestion != "N/A":
+            formatted_text += f"  Mixing Suggestion: {mix_suggestion}\n"
+        formatted_text += "\n"
+    
+    return formatted_text
+
+def clean_json_string(json_string):
+    """
+    Simple function to clean up a JSON string for display when parsing fails
+    """
+    # Remove any markdown code block markers
+    cleaned = json_string.replace('```json', '').replace('```', '')
+    
+    # Remove the JSON formatting characters
+    cleaned = cleaned.replace('[', '').replace(']', '')
+    cleaned = cleaned.replace('{', '').replace('}', '')
+    cleaned = cleaned.replace('"', '')
+    
+    # Replace JSON field names with more readable labels
+    cleaned = cleaned.replace('gimp_color_name:', 'GIMP Color:')
+    cleaned = cleaned.replace('rgb_color:', 'RGB Value:')
+    cleaned = cleaned.replace('physical_color_name:', 'Physical Color:')
+    cleaned = cleaned.replace('mixing_suggestions:', 'Mixing Suggestion:')
+    
+    # Clean up commas and formatting
+    cleaned = cleaned.replace(',', '')
+    
+    # Remove excessive whitespace and empty lines
+    lines = [line.strip() for line in cleaned.split('\n')]
+    lines = [line for line in lines if line]  # Remove empty lines
+    
+    return "PALETTE MAPPING RESULTS\n======================\n\n" + '\n'.join(lines)

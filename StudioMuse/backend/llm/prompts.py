@@ -20,11 +20,13 @@ Respond ONLY with a JSON array containing objects with the following structure, 
 [
   {{
     "gimp_color_name": "string",
-    "rgb_color": "string",
+    "rgb_color": "string",  // Format as a simple string like "rgb(0.123, 0.456, 0.789)"
     "physical_color_name": "string",
     "mixing_suggestions": "string"
   }}
 ]
+
+Important: Ensure the "rgb_color" value is a properly formatted string. Do not use nested quotes or escape characters.
 """
 
 # Prompt for adding a physical palette
