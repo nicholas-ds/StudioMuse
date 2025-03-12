@@ -157,13 +157,14 @@ def format_palette_mapping(result):
             data = json.loads(result)
         except:
             # If parsing fails, just return a cleaned version of the original string
+            Gimp.message(f"Using clean_json_string() to format result: {result}")
             return clean_json_string(result)
     else:
         # Already an object
         data = result
     
     # Build formatted output
-    formatted_text = "PALETTE MAPPING RESULTS\n"
+    formatted_text = "<b>PALETTE MAPPING RESULTS</b>\n"
     formatted_text += "======================\n\n"
     
     # Process each color mapping
@@ -173,10 +174,10 @@ def format_palette_mapping(result):
         physical_name = item.get("physical_color_name", "Unknown")
         mix_suggestion = item.get("mixing_suggestions", "N/A")
         
-        formatted_text += f"{name} ({physical_name}): {rgb}\n"
+        formatted_text += f"<b>{name}</b> (<i>{physical_name}</i>): <span foreground='blue'>{rgb}</span>\n"
         if mix_suggestion and mix_suggestion != "N/A":
-            formatted_text += f"  Mixing Suggestion: {mix_suggestion}\n"
-        formatted_text += "\n"
+            formatted_text += f"  <b>Mixing Suggestion:</b> {mix_suggestion}\n"
+        formatted_text += "==================================\n\n"
     
     return formatted_text
 
@@ -205,4 +206,30 @@ def clean_json_string(json_string):
     lines = [line.strip() for line in cleaned.split('\n')]
     lines = [line for line in lines if line]  # Remove empty lines
     
-    return "PALETTE MAPPING RESULTS\n======================\n\n" + '\n'.join(lines)
+    # Format with separators
+    result = "PALETTE MAPPING RESULTS\n======================\n\n"
+    
+    # Group lines by color entry (assuming 4 lines per color)
+    i = 0
+    while i < len(lines):
+        # Add as many lines as we can for this color entry
+        color_entry = []
+        while i < len(lines) and not lines[i].startswith("GIMP Color:"):
+            if color_entry:  # Only add if we've already started a color entry
+                color_entry.append(lines[i])
+            i += 1
+        
+        # Start a new color entry if we found a GIMP Color line
+        if i < len(lines):
+            color_entry = [lines[i]]
+            i += 1
+            # Add the remaining lines for this color
+            while i < len(lines) and not lines[i].startswith("GIMP Color:"):
+                color_entry.append(lines[i])
+                i += 1
+        
+        # Add the formatted color entry with separator
+        if color_entry:
+            result += "\n".join(color_entry) + "\n==================================\n\n"
+    
+    return result
