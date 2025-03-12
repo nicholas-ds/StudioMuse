@@ -104,10 +104,11 @@ class DemystifyerDialog(BaseDialog):
                     
                     if response.get("success"):
                         # Handle successful API response
-                        result = response.get("raw_response")
+                        result = response.get("response")
                         provider = response.get("provider", "unknown")
                         Gimp.message(f"API request successful! Received response from {provider} provider.")
-                        self.display_results(result)
+                        Gimp.message(f"This is the result: {result}")
+                        self.display_results(result, "resultTextView")
                         return
                     else:
                         # Handle API error
@@ -136,33 +137,3 @@ class DemystifyerDialog(BaseDialog):
     def on_add_physical_palette_clicked(self, button):
         from .add_palette_dialog import AddPaletteDialog
         AddPaletteDialog().show()
-
-    def display_results(self, result):
-        """Display the raw demystification results in the UI"""
-        try:
-            from gi.repository import Gimp
-            
-            # Get the text view for displaying results
-            text_view = self.builder.get_object("resultTextView")
-            if not text_view:
-                Gimp.message("Could not find resultTextView in the UI")
-                return
-            
-            # Get the buffer
-            buffer = text_view.get_buffer()
-            
-            # Display raw result without any processing
-            if isinstance(result, dict) and "raw_response" in result:
-                # If raw_response is available from the API
-                raw_text = result["raw_response"]
-            else:
-                # Convert any result to string representation
-                raw_text = str(result)
-            
-            # Set the raw text in the text view
-            buffer.set_text(raw_text)
-            
-        except Exception as e:
-            from colorBitMagic_utils import log_error
-            log_error("Error displaying results", e)
-            Gimp.message(f"Error displaying results: {str(e)}")

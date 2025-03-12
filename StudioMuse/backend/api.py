@@ -90,7 +90,7 @@ def palette_demystify(request: PaletteDemystifyRequest):
         
         return {
             "success": True,
-            "raw_response": content,
+            "response": content,
             "provider": request.llm_provider
         }
         
