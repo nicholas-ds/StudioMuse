@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import logging
 import json
+from datetime import datetime
 
 # Configure logging with more detail
 logging.basicConfig(
@@ -33,6 +34,11 @@ class PaletteDemystifyRequest(BaseModel):
     gimp_palette_colors: Dict[str, Dict[str, float]]
     physical_palette_data: List[str]
     llm_provider: str = "gemini"
+    temperature: float = 0.7
+
+class PhysicalPaletteRequest(BaseModel):
+    entry_text: str
+    llm_provider: str = "perplexity"
     temperature: float = 0.7
 
 # Health check endpoint
@@ -96,6 +102,44 @@ def palette_demystify(request: PaletteDemystifyRequest):
         
     except Exception as e:
         logger.error(f"Error in palette demystification: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+
+# Physical palette creation endpoint
+@app.post("/palette/create")
+def create_physical_palette(request: PhysicalPaletteRequest):
+    """Process a physical palette creation request"""
+    logger.info("=== RECEIVED PHYSICAL PALETTE CREATE REQUEST ===")
+    logger.info(f"Entry Text: {request.entry_text}")
+    logger.info(f"LLM Provider: {request.llm_provider}")
+    
+    try:
+        # Get LLM instance
+        llm = LLMServiceProvider.get_llm(
+            request.llm_provider, 
+            temperature=request.temperature
+        )
+        logger.info(f"Using LLM: {request.llm_provider}")
+        
+        # Import the physical palette prompt
+        from llm.prompts import add_physical_palette_prompt
+        
+        # Format the prompt
+        prompt = f"{add_physical_palette_prompt}\n\n The user's physical palette is: {request.entry_text}"
+        logger.info("Prompt formatted successfully")
+        
+        # Call LLM
+        logger.info("Calling LLM API...")
+        content = llm.call_api(prompt)
+        logger.info("LLM API call completed")
+        
+        return {
+            "success": True,
+            "response": content,
+            "provider": request.llm_provider
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in physical palette creation: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
 # Run the server if executed directly

@@ -227,49 +227,44 @@ def save_palette_to_file(llm_palette):
     except Exception as e:
         log_error("Failed to save palette to file", e)
 
-def save_json_to_file(data, filename):
+def save_json_to_file(data, filename, directory=None):
     """
-    Saves a given data dictionary to a JSON file in GIMP's plugin directory.
-    Legacy method - now wraps around PaletteProcessor.save_palette.
+    Saves a given data dictionary to a JSON file.
+    
+    Args:
+        data: Dictionary or object to save as JSON
+        filename: Name of the file (without .json extension)
+        directory: Optional directory path. If None, uses GIMP's plugin directory
+        
+    Returns:
+        str: Path to the saved file or None if failed
     """
     try:
-        # Convert to a PaletteData object
-        if "name" not in data:
-            data["name"] = filename
+        # Ensure filename has .json extension
+        if not filename.endswith('.json'):
+            filename = f"{filename}.json"
             
-        # Create a list of ColorData objects from the colors list if it exists
-        colors = []
-        if "colors" in data and isinstance(data["colors"], list):
-            for i, color_name in enumerate(data["colors"]):
-                colors.append(ColorData(
-                    name=color_name,
-                    hex_value="#000000"  # Default since we don't have hex values
-                ))
-                
-        # Create the palette object
-        if "source" in data or "additional_notes" in data:
-            # Physical palette
-            palette = PhysicalPalette(
-                name=data["name"],
-                colors=colors,
-                source=data.get("source", "unknown"),
-                additional_notes=data.get("additional_notes", "")
-            )
-        else:
-            # Regular palette
-            palette = PaletteData(
-                name=data["name"],
-                colors=colors,
-                description=data.get("description", "")
-            )
+        # Determine the directory path
+        if directory is None:
+            gimp_dir = Gimp.directory()
+            directory = os.path.join(gimp_dir, "plug-ins", "colorBitMagic")
             
-        # Save using PaletteProcessor
-        filepath = PaletteProcessor.save_palette(palette, f"{filename}.json")
-        if filepath:
-            Gimp.message(f"Data saved successfully to '{filepath}'.")
+        # Create directory if it doesn't exist
+        os.makedirs(directory, exist_ok=True)
+            
+        # Full path to the file
+        filepath = os.path.join(directory, filename)
+        
+        # Save the data
+        with open(filepath, 'w') as f:
+            json.dump(data, f, indent=2)
+            
+        Gimp.message(f"Data saved successfully to '{filepath}'.")
+        return filepath
             
     except Exception as e:
-        log_error(f"Failed to save data to file '{filename}.json'", e)
+        log_error(f"Failed to save data to file '{filename}'", e)
+        return None
 
 def populate_palette_dropdown(builder):
     """Populates the GIMP palette dropdown."""

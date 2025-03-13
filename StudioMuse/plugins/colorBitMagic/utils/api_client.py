@@ -139,6 +139,54 @@ class BackendAPIClient:
             logger.error(f"Palette demystification failed: {e}")
             return {"success": False, "error": str(e)}
 
+    def create_physical_palette(self, entry_text: str, llm_provider: str = "perplexity", temperature: float = 0.7):
+        """
+        Send a physical palette creation request to the backend
+        
+        Args:
+            entry_text: Text description of the physical palette
+            llm_provider: LLM provider to use (default: perplexity)
+            temperature: Temperature setting for the LLM (default: 0.7)
+            
+        Returns:
+            Dict containing the raw response from the LLM with keys:
+            - success: Boolean indicating if the request was successful
+            - response: Raw content returned by the LLM
+            - provider: The LLM provider that was used
+        """
+        try:
+            # Format the request payload according to the API's expected format
+            payload = {
+                "entry_text": entry_text,
+                "llm_provider": llm_provider,
+                "temperature": temperature
+            }
+            
+            logger.info(f"Sending physical palette creation request")
+            
+            response = requests.post(f"{self.base_url}/palette/create", json=payload)
+            
+            if response.status_code != 200:
+                logger.error(f"API returned status code: {response.status_code}")
+                logger.error(f"Response content: {response.text}")
+                return {"success": False, "error": f"API error: {response.text}"}
+            
+            try:
+                # Parse the JSON response
+                return response.json()
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse API response as JSON: {e}")
+                logger.error(f"Raw response: {response.text}")
+                return {
+                    "success": False, 
+                    "error": f"Failed to parse API response as JSON: {str(e)}",
+                    "raw_response": response.text
+                }
+            
+        except Exception as e:
+            logger.error(f"Physical palette creation failed: {e}")
+            return {"success": False, "error": str(e)}
+
 # Singleton instance
 api_client = BackendAPIClient()
 
@@ -168,6 +216,23 @@ def test_demystify_palette():
     print("API Response:", result)
     return result.get("success", False)
 
+def test_create_physical_palette():
+    """Test the physical palette creation API endpoint"""
+    client = BackendAPIClient()
+    
+    # Test data
+    entry_text = "Winsor & Newton Cotman 12 Half Pan Set"
+    
+    # Call the API
+    result = client.create_physical_palette(entry_text)
+    
+    print("API Response:", result)
+    return result.get("success", False)
+
 if __name__ == "__main__":
+    # Uncomment to test the specific function
+    # success = test_create_physical_palette()
+    # print(f"Test {'passed' if success else 'failed'}")
+    
     success = test_demystify_palette()
     print(f"Test {'passed' if success else 'failed'}") 
