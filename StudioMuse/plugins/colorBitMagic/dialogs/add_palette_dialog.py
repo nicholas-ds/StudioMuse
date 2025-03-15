@@ -53,15 +53,11 @@ class AddPaletteDialog(BaseDialog):
             # Get the raw response from the LLM
             raw_response = result.get("response", "")
             
-            # Create an LLMPhysicalPalette instance with just the raw response
-            llm_palette = LLMPhysicalPalette()
-            llm_palette.raw_response = raw_response
-            llm_palette.physical_palette_name = "LLM Generated Palette"  # Default name
-            
-            # Store the instance in the dialog for later access
-            self.llm_palette_instance = llm_palette
+            # Store the raw response for later access (for saving)
+            self.raw_response = raw_response
+            self.palette_name = "LLM Generated Palette"
 
-            # Use the display_results method from BaseDialog instead of direct text view manipulation
+            # Display the results
             self.display_results(raw_response, "GtkTextView")
 
             # Show success message
@@ -74,22 +70,16 @@ class AddPaletteDialog(BaseDialog):
         """Handles saving the generated palette."""
         Gimp.message("Save button clicked. This function is being called.")
 
-        # Access the stored LLMPhysicalPalette instance
-        llm_palette = getattr(self, 'llm_palette_instance', None)
-        if llm_palette is None:
+        # Check if we have a response to save
+        if not hasattr(self, 'raw_response'):
             Gimp.message("No LLM response found. Please generate a palette first.")
             return
 
-        # Prepare the palette data
-        palette_name = llm_palette.physical_palette_name
+        palette_name = self.palette_name
         
-        # Create a proper data structure for the palette
         palette_data = {
             "name": palette_name,
-            "raw_response": llm_palette.raw_response,
-            "colors_listed": llm_palette.colors_listed,
-            "palette_source": llm_palette.palette_source,
-            "additional_notes": llm_palette.additional_notes
+            "raw_response": self.raw_response,
         }
         
         # Define the output directory for physical palettes
