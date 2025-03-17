@@ -9,6 +9,7 @@ from colorBitMagic_utils import (
     get_palette_colors,
     log_error
 )
+import json
 from llm.PaletteDemistifyerLLM import PaletteDemistifyerLLM
 from utils.api_client import BackendAPIClient
 
@@ -109,7 +110,7 @@ class DemystifyerDialog(BaseDialog):
                         Gimp.message(f"API request successful! Received response from {provider} provider.")
                         
                         # Format the result for display
-                        formatted_result = format_palette_mapping(result)
+                        formatted_result = self.format_palette_mapping(result)
                         self.display_results(formatted_result, "resultTextView")
                         return
                     else:
@@ -140,96 +141,113 @@ class DemystifyerDialog(BaseDialog):
         from .add_palette_dialog import AddPaletteDialog
         AddPaletteDialog().show()
 
-def format_palette_mapping(result):
-    """
-    Format palette mapping data into a readable text format.
-    
-    Args:
-        result: The palette mapping data (string or object)
-        
-    Returns:
-        Formatted string for display
-    """
-    # If result is already a string, use it directly
-    if isinstance(result, str):
-        # Try to parse as JSON
-        try:
-            data = json.loads(result)
-        except:
-            # If parsing fails, just return a cleaned version of the original string
-            Gimp.message(f"Using clean_json_string() to format result: {result}")
-            return clean_json_string(result)
-    else:
-        # Already an object
-        data = result
-    
-    # Build formatted output
-    formatted_text = "<b>PALETTE MAPPING RESULTS</b>\n"
-    formatted_text += "======================\n\n"
-    
-    # Process each color mapping
-    for item in data:
-        name = item.get("gimp_color_name", "Unknown")
-        rgb = item.get("rgb_color", "N/A")
-        physical_name = item.get("physical_color_name", "Unknown")
-        mix_suggestion = item.get("mixing_suggestions", "N/A")
-        
-        formatted_text += f"<b>{name}</b> (<i>{physical_name}</i>): <span foreground='blue'>{rgb}</span>\n"
-        if mix_suggestion and mix_suggestion != "N/A":
-            formatted_text += f"  <b>Mixing Suggestion:</b> {mix_suggestion}\n"
-        formatted_text += "==================================\n\n"
-    
-    return formatted_text
+    def format_palette_mapping(self, result):
+        """
+        Ensure the result is correctly parsed into a list of dictionaries.
 
-def clean_json_string(json_string):
-    """
-    Simple function to clean up a JSON string for display when parsing fails
-    """
-    # Remove any markdown code block markers
-    cleaned = json_string.replace('```json', '').replace('```', '')
-    
-    # Remove the JSON formatting characters
-    cleaned = cleaned.replace('[', '').replace(']', '')
-    cleaned = cleaned.replace('{', '').replace('}', '')
-    cleaned = cleaned.replace('"', '')
-    
-    # Replace JSON field names with more readable labels
-    cleaned = cleaned.replace('gimp_color_name:', 'GIMP Color:')
-    cleaned = cleaned.replace('rgb_color:', 'RGB Value:')
-    cleaned = cleaned.replace('physical_color_name:', 'Physical Color:')
-    cleaned = cleaned.replace('mixing_suggestions:', 'Mixing Suggestion:')
-    
-    # Clean up commas and formatting
-    cleaned = cleaned.replace(',', '')
-    
-    # Remove excessive whitespace and empty lines
-    lines = [line.strip() for line in cleaned.split('\n')]
-    lines = [line for line in lines if line]  # Remove empty lines
-    
-    # Format with separators
-    result = "PALETTE MAPPING RESULTS\n======================\n\n"
-    
-    # Group lines by color entry (assuming 4 lines per color)
-    i = 0
-    while i < len(lines):
-        # Add as many lines as we can for this color entry
-        color_entry = []
-        while i < len(lines) and not lines[i].startswith("GIMP Color:"):
-            if color_entry:  # Only add if we've already started a color entry
-                color_entry.append(lines[i])
-            i += 1
+        Args:
+            result: JSON string or dictionary object.
+            
+        Returns:
+            A list of structured data for display_results.
+        """
+        # Log the raw response for debugging
+        Gimp.message(f"Raw API response: {str(result)}")
+
+        # If result is a string, attempt to parse it
+        if isinstance(result, str):
+            try:
+                # Remove markdown code block markers if present
+                clean_result = result.replace('```json', '').replace('```', '').strip()
+                data = json.loads(clean_result)  # Convert JSON string to dictionary
+            except json.JSONDecodeError as e:
+                Gimp.message(f"JSON parsing error: {str(e)}")
+                # If parsing fails, try to render a plain text version
+                cleaned_text = self.clean_json_string(result)
+                return [{"error": cleaned_text}]
+        else:
+            data = result
+
+        # Ensure the data is a list
+        if not isinstance(data, list):
+            Gimp.message("API response format unexpected (not a list)")
+            return [{"error": "Unexpected API response format"}]
+
+        formatted_data = []
+        for index, item in enumerate(data):
+            if not isinstance(item, dict):
+                Gimp.message(f"Malformed entry at index {index}: {str(item)}")
+                continue  # Skip invalid entries
+            
+            # Make sure all required keys exist with default values
+            entry = {
+                "gimp_color_name": item.get("gimp_color_name", f"Unknown-{index}"),
+                "rgb_color": item.get("rgb_color", "N/A"),
+                "physical_color_name": item.get("physical_color_name", "Unknown"),
+                "mixing_suggestions": item.get("mixing_suggestions", "N/A")
+            }
+            formatted_data.append(entry)
+
+        if not formatted_data:
+            # Return a list with a single error entry that has all required keys
+            return [{
+                "gimp_color_name": "Error",
+                "rgb_color": "N/A",
+                "physical_color_name": "Error",
+                "mixing_suggestions": "No valid color mappings received from API"
+            }]
+
+        return formatted_data
+
+    def clean_json_string(self, json_string):
+        """
+        Simple function to clean up a JSON string for display when parsing fails
+        """
+        # Remove any markdown code block markers
+        cleaned = json_string.replace('```json', '').replace('```', '')
         
-        # Start a new color entry if we found a GIMP Color line
-        if i < len(lines):
-            color_entry = [lines[i]]
-            i += 1
-            # Add the remaining lines for this color
+        # Remove the JSON formatting characters
+        cleaned = cleaned.replace('[', '').replace(']', '')
+        cleaned = cleaned.replace('{', '').replace('}', '')
+        cleaned = cleaned.replace('"', '')
+        
+        # Replace JSON field names with more readable labels
+        cleaned = cleaned.replace('gimp_color_name:', 'GIMP Color:')
+        cleaned = cleaned.replace('rgb_color:', 'RGB Value:')
+        cleaned = cleaned.replace('physical_color_name:', 'Physical Color:')
+        cleaned = cleaned.replace('mixing_suggestions:', 'Mixing Suggestion:')
+        
+        # Clean up commas and formatting
+        cleaned = cleaned.replace(',', '')
+        
+        # Remove excessive whitespace and empty lines
+        lines = [line.strip() for line in cleaned.split('\n')]
+        lines = [line for line in lines if line]  # Remove empty lines
+        
+        # Format with separators
+        result = "PALETTE MAPPING RESULTS\n======================\n\n"
+        
+        # Group lines by color entry (assuming 4 lines per color)
+        i = 0
+        while i < len(lines):
+            # Add as many lines as we can for this color entry
+            color_entry = []
             while i < len(lines) and not lines[i].startswith("GIMP Color:"):
-                color_entry.append(lines[i])
+                if color_entry:  # Only add if we've already started a color entry
+                    color_entry.append(lines[i])
                 i += 1
+            
+            # Start a new color entry if we found a GIMP Color line
+            if i < len(lines):
+                color_entry = [lines[i]]
+                i += 1
+                # Add the remaining lines for this color
+                while i < len(lines) and not lines[i].startswith("GIMP Color:"):
+                    color_entry.append(lines[i])
+                    i += 1
+            
+            # Add the formatted color entry with separator
+            if color_entry:
+                result += "\n".join(color_entry) + "\n==================================\n\n"
         
-        # Add the formatted color entry with separator
-        if color_entry:
-            result += "\n".join(color_entry) + "\n==================================\n\n"
-    
-    return result
+        return result
