@@ -2,7 +2,6 @@ import gi
 from gi.repository import Gimp
 from .base_dialog import BaseDialog
 from colorBitMagic_utils import save_json_to_file
-from llm.LLMPhysicalPalette import LLMPhysicalPalette
 from utils.api_client import api_client
 import os
 

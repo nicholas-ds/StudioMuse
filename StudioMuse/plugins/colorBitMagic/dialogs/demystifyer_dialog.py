@@ -10,7 +10,6 @@ from colorBitMagic_utils import (
     log_error
 )
 import json
-from llm.PaletteDemistifyerLLM import PaletteDemistifyerLLM
 from utils.api_client import BackendAPIClient
 
 class DemystifyerDialog(BaseDialog):
