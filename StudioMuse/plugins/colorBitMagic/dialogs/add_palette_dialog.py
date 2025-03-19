@@ -56,8 +56,8 @@ class AddPaletteDialog(BaseDialog):
             self.raw_response = raw_response
             self.palette_name = "LLM Generated Palette"
 
-            # Display the results
-            self.display_results(raw_response, "GtkTextView")
+            # Display the results in raw format (custom method for raw text)
+            self.display_raw_text(raw_response, "GtkTextView")
 
             # Show success message
             Gimp.message("Received response from LLM")
@@ -96,3 +96,41 @@ class AddPaletteDialog(BaseDialog):
             Gimp.message(f"Palette '{palette_name}' saved successfully.")
         else:
             Gimp.message(f"Failed to save palette '{palette_name}'.")
+
+    def display_raw_text(self, text, text_view_id):
+        """
+        Display raw text in a specified GtkTextView.
+
+        Args:
+            text: Raw text string to display.
+            text_view_id: ID of the GtkTextView widget.
+        """
+        try:
+            # Get the GtkTextView object
+            text_view = self.builder.get_object(text_view_id)
+            if not text_view:
+                Gimp.message(f"Could not find text view with ID: {text_view_id}")
+                return
+
+            # Get the GtkTextBuffer
+            text_buffer = text_view.get_buffer()
+
+            # Clear existing text
+            text_buffer.set_text("")
+            
+            # Set up tags
+            self._get_or_create_tags(text_buffer)
+
+            # Insert header
+            self.insert_styled_text(text_buffer, "LLM GENERATED PALETTE\n", "header")
+            
+            # Insert separator
+            self.insert_styled_text(text_buffer, "======================\n\n", "monospace")
+
+            # Insert the raw text
+            self.insert_styled_text(text_buffer, text, None)
+
+        except Exception as e:
+            from colorBitMagic_utils import log_error
+            log_error("Error displaying raw text", e)
+            Gimp.message(f"Error displaying results: {str(e)}")

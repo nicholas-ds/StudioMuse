@@ -14,7 +14,7 @@ from utils.api_client import BackendAPIClient
 
 class DemystifyerDialog(BaseDialog):
     def __init__(self):
-        super().__init__("dmMain.xml", "dmMainWindow")
+        super().__init__("dmMain_update_populated.xml", "dmMainWindow")
         # Initialize dropdowns
         populate_palette_dropdown(self.builder)
         populate_physical_palette_dropdown(self.builder)
@@ -44,6 +44,16 @@ class DemystifyerDialog(BaseDialog):
             if not gimp_palette_colors:
                 Gimp.message(f"Failed to load GIMP palette: {selected_palette}")
                 return
+            
+            # Log the GIMP palette colors for debugging
+            Gimp.message(f"Original GIMP palette '{selected_palette}' contains {len(gimp_palette_colors)} colors:")
+            for i, color in enumerate(gimp_palette_colors):
+                if isinstance(color, dict):
+                    color_name = color.get('name', 'Unnamed')
+                    color_value = color.get('rgb_color', 'No RGB value')
+                    Gimp.message(f"  Color {i+1}: {color_name} - {color_value}")
+                else:
+                    Gimp.message(f"  Color {i+1}: {color}")
             
             # Load physical palette data
             physical_palette_data = load_physical_palette_data(selected_physical_palette)
@@ -250,3 +260,221 @@ class DemystifyerDialog(BaseDialog):
                 result += "\n".join(color_entry) + "\n==================================\n\n"
         
         return result
+
+    def display_results(self, formatted_data, result_widget_id):
+        """
+        Display formatted color mapping results in a selectable list with color swatches.
+        
+        Args:
+            formatted_data: List of dictionaries containing color mapping info
+            result_widget_id: ID of the GtkScrolledWindow to populate
+        """
+        # Import required Gtk components
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk, Gdk, Pango
+        
+        # Get required UI elements
+        result_container = self.builder.get_object(result_widget_id)  # GtkScrolledWindow
+        right_panel = self.builder.get_object("colorSwatch")  # Drawing area for color display
+        
+        if not result_container or not right_panel:
+            Gimp.message("Error: Could not find required UI elements.")
+            return
+        
+        # Remove existing content from scrolled window
+        existing_list = result_container.get_child()
+        if existing_list:
+            result_container.remove(existing_list)
+        
+        # Create a new selectable GtkListBox
+        list_box = Gtk.ListBox()
+        list_box.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        result_container.add(list_box)
+        
+        # Store color_results at class level for access in row selection handler
+        self.color_results = []
+        
+        for item in formatted_data:
+            # Convert RGB string to hex
+            hex_value = "#000000"  # Default black
+            rgb_str = item['rgb_color']
+            try:
+                # Parse RGB string like "rgb(0.020, 0.027, 0.039)"
+                rgb_values = rgb_str.replace("rgb(", "").replace(")", "").split(",")
+                r = int(float(rgb_values[0].strip()) * 255)
+                g = int(float(rgb_values[1].strip()) * 255)
+                b = int(float(rgb_values[2].strip()) * 255)
+                hex_value = f"#{r:02x}{g:02x}{b:02x}"
+            except (ValueError, IndexError) as e:
+                log_error("RGB parsing error", e)
+            
+            # Create a color entry with all needed information
+            color_entry = {
+                "name": item['gimp_color_name'],
+                "hex_value": hex_value,
+                "rgb_color": item['rgb_color'],
+                "physical_color_name": item['physical_color_name'],
+                "mixing_suggestions": item['mixing_suggestions']
+            }
+            self.color_results.append(color_entry)
+        
+        # Define the callback outside so we can trigger it manually for the first item
+        def on_row_selected(listbox, row):
+            if row is None:
+                return
+            # Get index from the row and use it to access the color data
+            index = row.get_index()
+            if 0 <= index < len(self.color_results):
+                color_data = self.color_results[index]
+                self.update_right_panel(right_panel, color_data)
+                Gimp.message(f"Selected color: {color_data['name']}")  # Debug message
+        
+        # Connect the callback to the list box
+        list_box.connect("row-selected", on_row_selected)
+        
+        # Populate the list with colors
+        for color in self.color_results:
+            row = Gtk.ListBoxRow()
+            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+            vbox.set_margin_start(10)
+            vbox.set_margin_end(10)
+            vbox.set_margin_top(5)
+            vbox.set_margin_bottom(5)
+            
+            # Top row with color name and swatch
+            hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            
+            # Create name label
+            label = Gtk.Label(xalign=0)
+            label.set_markup(f"<b>{color['name']}</b>")
+            label.set_ellipsize(Pango.EllipsizeMode.END)
+            
+            # Create color preview swatch
+            drawing_area = Gtk.DrawingArea()
+            drawing_area.set_size_request(30, 20)
+            
+            # Use a class to store the hex value for the closure
+            class DrawParams:
+                def __init__(self, hex_val):
+                    self.hex_val = hex_val
+                    
+            draw_params = DrawParams(color["hex_value"])
+            
+            def draw_callback(widget, cr, draw_params):
+                color_rgba = Gdk.RGBA()
+                color_rgba.parse(draw_params.hex_val)
+                cr.set_source_rgba(color_rgba.red, color_rgba.green, color_rgba.blue, color_rgba.alpha)
+                cr.rectangle(0, 0, widget.get_allocated_width(), widget.get_allocated_height())
+                cr.fill()
+                return False
+            
+            drawing_area.connect("draw", draw_callback, draw_params)
+            
+            # Add physical color information
+            physical_label = Gtk.Label(xalign=0)
+            physical_label.set_markup(f"<i>Physical:</i> {color['physical_color_name']}")
+            physical_label.set_ellipsize(Pango.EllipsizeMode.END)
+            
+            # Pack widgets into containers
+            hbox.pack_start(label, True, True, 0)
+            hbox.pack_end(drawing_area, False, False, 0)
+            
+            vbox.pack_start(hbox, False, False, 0)
+            vbox.pack_start(physical_label, False, False, 0)
+            
+            row.add(vbox)
+            list_box.add(row)
+        
+        # Show all widgets before selecting the first row
+        list_box.show_all()
+        
+        # Select the first row by default to display initial color
+        if len(self.color_results) > 0:
+            first_row = list_box.get_row_at_index(0)
+            if first_row:
+                list_box.select_row(first_row)
+                # Force update with the first item
+                on_row_selected(list_box, first_row)
+    
+    def update_right_panel(self, drawing_area, color_data):
+        """
+        Updates the right panel to display the selected color and information.
+        
+        Args:
+            drawing_area: GtkDrawingArea for color display
+            color_data: Dictionary containing color information
+        """
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk, Gdk
+        
+        # Log what we're updating to for debugging
+        Gimp.message(f"Updating right panel with: {color_data['name']} ({color_data['hex_value']})")
+        
+        # The colorSwatch is a drawing area, not a container
+        # We need to get the rightPanel which is the container for everything
+        right_panel = self.builder.get_object("rightPanel")
+        
+        if not right_panel:
+            Gimp.message("Error: Could not find rightPanel in UI")
+            return
+            
+        # Remove any existing children
+        for child in right_panel.get_children():
+            right_panel.remove(child)
+        
+        # Create new container for color swatch and info
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        vbox.set_margin_start(10)
+        vbox.set_margin_end(10)
+        vbox.set_margin_top(10)
+        vbox.set_margin_bottom(10)
+        
+        # Create a larger color swatch
+        new_drawing_area = Gtk.DrawingArea()
+        new_drawing_area.set_size_request(200, 100)
+        
+        # Use a class to store the hex value for the closure
+        class DrawParams:
+            def __init__(self, hex_val):
+                self.hex_val = hex_val
+                
+        draw_params = DrawParams(color_data["hex_value"])
+        
+        def draw_color(widget, cr, params):
+            color_rgba = Gdk.RGBA()
+            color_rgba.parse(params.hex_val)
+            cr.set_source_rgba(color_rgba.red, color_rgba.green, color_rgba.blue, color_rgba.alpha)
+            cr.rectangle(0, 0, widget.get_allocated_width(), widget.get_allocated_height())
+            cr.fill()
+            return False
+        
+        new_drawing_area.connect("draw", draw_color, draw_params)
+        
+        # Create labels for color information
+        name_label = Gtk.Label(xalign=0)
+        name_label.set_markup(f"<big><b>{color_data['name']}</b></big>")
+        
+        rgb_label = Gtk.Label(xalign=0)
+        rgb_label.set_markup(f"<b>RGB:</b> {color_data['rgb_color']}")
+        
+        physical_label = Gtk.Label(xalign=0)
+        physical_label.set_markup(f"<b>Physical color:</b> {color_data['physical_color_name']}")
+        
+        mixing_label = Gtk.Label(xalign=0)
+        mixing_label.set_markup(f"<b>Mixing suggestions:</b>\n{color_data['mixing_suggestions']}")
+        mixing_label.set_line_wrap(True)
+        mixing_label.set_justify(Gtk.Justification.FILL)
+        
+        # Add all elements to the vbox
+        vbox.pack_start(name_label, False, False, 0)
+        vbox.pack_start(new_drawing_area, False, False, 0)
+        vbox.pack_start(rgb_label, False, False, 0)
+        vbox.pack_start(physical_label, False, False, 0)
+        vbox.pack_start(mixing_label, False, False, 0)
+        
+        # Add the vbox to the right panel
+        right_panel.add(vbox)
+        right_panel.show_all()
+        
+        # Force redraw of the drawing area
+        new_drawing_area.queue_draw()
