@@ -1,8 +1,12 @@
-# llm/base_llm.py (updated)
+import logging
 from pydantic import BaseModel
 import os
 import requests
 from typing import Dict, Any, Optional, List
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class BaseLLM(BaseModel):
     model: str
@@ -27,6 +31,7 @@ class BaseLLM(BaseModel):
             api_key=api_key,
             max_output_tokens=max_output_tokens
         )
+        logger.info(f"Initialized BaseLLM with model: {model}")
 
     def prepare_messages(self, prompt: str) -> List[Dict[str, str]]:
         """
@@ -55,26 +60,46 @@ class BaseLLM(BaseModel):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-
-    def parse_response(self, response_json: Dict[str, Any]) -> Dict[str, Any]:
+        
+    def call_api(self, prompt: str) -> str:
         """
-        Parse the API response
-        Override this method for providers with different response structures
+        Call the API with the given prompt.
+        
+        Args:
+            prompt: The input text to send to the API
+            
+        Returns:
+            str: The generated text response
+            
+        Raises:
+            Exception: If there's an error calling the API
         """
-        return response_json
-
-    def call_api(self, prompt: str) -> Dict[str, Any]:
-        """
-        Generic method to call the LLM API with standard error handling.
-        """
+        logger.info(f"BaseLLM.call_api called with prompt: {prompt[:50]}...")
+        payload = self.prepare_payload(prompt)
+        
         try:
-            payload = self.prepare_payload(prompt)
-            headers = self.prepare_headers()
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.api_key}'
+            }
             
-            response = requests.post(self.api_url, json=payload, headers=headers)
+            response = requests.post(
+                self.api_url,
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
             response.raise_for_status()
+            result = response.json()
             
-            return self.parse_response(response.json())
-
+            # Extract text from response
+            if 'choices' in result and len(result['choices']) > 0:
+                return result['choices'][0]['message']['content']
+            else:
+                logger.error(f"Unexpected response format: {result}")
+                raise Exception(f"Unexpected response format: {result}")
+                
         except Exception as e:
-            raise Exception(f"Error calling API: {type(e).__name__}: {e}")
+            logger.error(f"Error calling API: {e}")
+            raise Exception(f"Error calling API: {e}") 

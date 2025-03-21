@@ -101,9 +101,11 @@ class PaletteProcessor:
             
             # Create hex color
             hex_value = f"#{r:02x}{g:02x}{b:02x}"
+            Gimp.message(f"Converted Gegl.Color to ColorData: {hex_value}")
             
             # Create RGB dict
             rgb = {"r": r, "g": g, "b": b}
+            Gimp.message(f"RGB values: {rgb}")
             
             # Return ColorData
             return ColorData(name=name, hex_value=hex_value, rgb=rgb)

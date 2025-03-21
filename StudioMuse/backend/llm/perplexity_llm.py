@@ -1,13 +1,25 @@
-# llm/perplexity_llm.py (updated)
 import os
+import logging
 from typing import Dict, Any
 from .base_llm import BaseLLM
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class PerplexityLLM(BaseLLM):
     def __init__(self, 
                  model: str = "sonar-pro",
                  temperature: float = 0.0,
                  top_k: int = 10):
+        """
+        Initialize the Perplexity LLM client.
+        
+        Args:
+            model: Perplexity model to use
+            temperature: Controls randomness in response (0.0-1.0)
+            top_k: Number of tokens to consider for each step
+        """
         super().__init__(
             model=model,
             api_url="https://api.perplexity.ai/chat/completions",
@@ -20,4 +32,4 @@ class PerplexityLLM(BaseLLM):
         """Override to include Perplexity-specific parameters."""
         payload = super().prepare_payload(prompt)
         payload["top_k"] = self.top_k  # Perplexity-specific parameter
-        return payload
+        return payload 
