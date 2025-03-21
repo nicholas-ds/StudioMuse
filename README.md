@@ -75,35 +75,7 @@ Future development will include a nicer UI for displaying the result of this pro
 
 "Menu Arrow" > Add Tab > Error Console
 
-## Future Development
 
-- **2D Image to 3D Object Conversion**: We are exploring the integration of AI-driven depth estimation and 3D reconstruction models into GIMP. This feature would allow artists to generate 3D representations from 2D reference images, facilitating better visualization for painting, sculpture, and digital modeling. Possible implementations include:
-  - Depth map generation from 2D images.
-  - AI-assisted mesh reconstruction.
-  - Exporting generated 3D models in formats like OBJ for use in external applications.
-  - **Hunyuan 3D-2 Integration**: We plan to incorporate Tencent’s Hunyuan 3D-2, an AI-driven 3D model generation tool that efficiently reconstructs 3D structures from 2D images. This will allow for more accurate and detailed transformations with minimal user intervention.
-
-- **Enhanced AI Integration**: Integrate a vision model for features such as segmentation and automated manipulations.
-  - **Google Vision API Integration**: Implementing Google Vision API for advanced image recognition, object detection, and enhanced color matching capabilities to refine the accuracy of extracted palette data.
-
-- **User Interface Improvements**:
-  - Develop a more intuitive UI for palette matching results
-  - Better integration with GIMP's native interface
-  - Add visual color swatches for matched colors
-
-- **Cross-Platform Support**: Long term goal is to integrate with Blender for 3D modeling generation and enhanced reference image manipulations.
-
-- **2D Image to 3D Object Conversion**: We are exploring the integration of AI-driven depth estimation and 3D reconstruction models into GIMP. This feature would allow artists to generate 3D representations from 2D reference images, facilitating better visualization for painting, sculpture, and digital modeling. Possible implementations include:
-  - Depth map generation from 2D images.
-  - AI-assisted mesh reconstruction.
-  - Exporting generated 3D models in formats like OBJ for use in external applications.
-
-- **Enhanced AI Integration**: Integrate a vision model for features such as segmentation and automated manipulations.
-- **User Interface Improvements**:
-  - Develop a more intuitive UI for palette matching results
-  - Better integration with GIMP's native interface
-  - Add visual color swatches for matched colors
-- **Cross-Platform Support**: Long term goal is to integrate with Blender for 3D modeling generation and enhanced reference image manipulations.
 
 ## License
 
