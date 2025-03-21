@@ -71,9 +71,6 @@ This is a tool that will help you approximate the colors in your physical art pa
 4. Click "Submit", wait for LLM response.
 5. The LLM will return the list of colors in your GIMP palette, matched with the closest physical palette color in your set.
 
-Future development will include a nicer UI for displaying the result of this process so you don't have to keep the window open to see the results. For now the LLM will respond and display the results in the GIMP console. The GIMP console can be added via the arrow button on the top right, above the GIMP control panel. By default, the control panel holds your layers tab.
-
-"Menu Arrow" > Add Tab > Error Console
 
 
 
