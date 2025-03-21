@@ -4,6 +4,7 @@ from .base_dialog import BaseDialog
 from colorBitMagic_utils import save_json_to_file
 from utils.api_client import api_client
 import os
+import json
 
 class AddPaletteDialog(BaseDialog):
     def __init__(self):
@@ -51,13 +52,17 @@ class AddPaletteDialog(BaseDialog):
                 
             # Get the raw response from the LLM
             raw_response = result.get("response", "")
+            json_response = json.loads(raw_response)
             
             # Store the raw response for later access (for saving)
+            self.palette_name = json_response.get("set_name", "LLM Generated Palette")
             self.raw_response = raw_response
-            self.palette_name = "LLM Generated Palette"
+            self.palette_colors = json_response.get('colors', [])
+            self.palette_pieces = json_response.get('piece_count', [])
 
             # Display the results in raw format (custom method for raw text)
-            self.display_raw_text(raw_response, "GtkTextView")
+            # Replace with a better presentation method
+            self.display_formatted_palette(json_response, "GtkTextView")
 
             # Show success message
             Gimp.message("Received response from LLM")
@@ -106,31 +111,90 @@ class AddPaletteDialog(BaseDialog):
             text_view_id: ID of the GtkTextView widget.
         """
         try:
-            # Get the GtkTextView object
+            # Parse the JSON data
+            palette_data = json.loads(text)
+            
+            # Format the data in a more readable way
+            formatted_text = f"PALETTE: {palette_data.get('set_name', 'Unknown')}\n"
+            formatted_text += f"Number of Colors: {palette_data.get('piece_count', 'Unknown')}\n\n"
+            formatted_text += "COLORS:\n"
+            
+            # List each color with a bullet point
+            for i, color in enumerate(palette_data.get('colors', []), 1):
+                formatted_text += f"  • {color}\n"
+            
+            # Add any additional notes
+            if 'additional_notes' in palette_data and palette_data['additional_notes']:
+                formatted_text += f"\nNotes: {palette_data['additional_notes']}\n"
+            
+            # Update the text view
             text_view = self.builder.get_object(text_view_id)
-            if not text_view:
-                Gimp.message(f"Could not find text view with ID: {text_view_id}")
-                return
-
-            # Get the GtkTextBuffer
-            text_buffer = text_view.get_buffer()
-
-            # Clear existing text
-            text_buffer.set_text("")
+            buffer = text_view.get_buffer()
+            buffer.set_text(formatted_text)
             
-            # Set up tags
-            self._get_or_create_tags(text_buffer)
-
-            # Insert header
-            self.insert_styled_text(text_buffer, "LLM GENERATED PALETTE\n", "header")
-            
-            # Insert separator
-            self.insert_styled_text(text_buffer, "======================\n\n", "monospace")
-
-            # Insert the raw text
-            self.insert_styled_text(text_buffer, text, None)
+        except json.JSONDecodeError:
+            # Fallback to showing raw text if not valid JSON
+            text_view = self.builder.get_object(text_view_id)
+            buffer = text_view.get_buffer()
+            buffer.set_text(text)
 
         except Exception as e:
             from colorBitMagic_utils import log_error
             log_error("Error displaying raw text", e)
             Gimp.message(f"Error displaying results: {str(e)}")
+
+    def display_formatted_palette(self, palette_data, text_view_id):
+        """
+        Display palette information in a formatted, visually appealing way.
+
+        Args:
+            palette_data: Dictionary containing palette information
+            text_view_id: ID of the GtkTextView widget
+        """
+        try:
+            # Get text view and its buffer
+            text_view = self.builder.get_object(text_view_id)
+            buffer = text_view.get_buffer()
+            
+            # Create tags for formatting
+            buffer.create_tag("title", weight=800, size_points=14)
+            buffer.create_tag("subtitle", weight=600, size_points=12)
+            buffer.create_tag("normal", size_points=10)
+            
+            # Start with empty buffer
+            buffer.set_text("")
+            
+            # Insert title
+            iter = buffer.get_end_iter()
+            buffer.insert_with_tags_by_name(iter, f"PALETTE: {palette_data.get('set_name', 'Unknown')}\n", "title")
+            
+            # Insert piece count
+            iter = buffer.get_end_iter()
+            buffer.insert_with_tags_by_name(iter, f"Number of Colors: {palette_data.get('piece_count', 'Unknown')}\n\n", "subtitle")
+            
+            # Insert colors section header
+            iter = buffer.get_end_iter()
+            buffer.insert_with_tags_by_name(iter, "COLORS:\n", "subtitle")
+            
+            # Insert each color with a bullet point
+            for i, color in enumerate(palette_data.get('colors', []), 1):
+                iter = buffer.get_end_iter()
+                buffer.insert_with_tags_by_name(iter, f"  • {color}\n", "normal")
+            
+            # Insert additional notes if available
+            if 'additional_notes' in palette_data and palette_data['additional_notes']:
+                iter = buffer.get_end_iter()
+                buffer.insert_with_tags_by_name(iter, f"\nNotes: ", "subtitle")
+                iter = buffer.get_end_iter()
+                buffer.insert_with_tags_by_name(iter, f"{palette_data['additional_notes']}\n", "normal")
+            
+        except Exception as e:
+            from colorBitMagic_utils import log_error
+            log_error("Error displaying formatted palette", e)
+            Gimp.message(f"Error displaying palette: {str(e)}")
+            
+            # Fallback to simple text display if formatting fails
+            text_view = self.builder.get_object(text_view_id)
+            buffer = text_view.get_buffer()
+            buffer.set_text(f"Palette: {palette_data.get('set_name', 'Unknown')}\n" +
+                           f"Colors: {', '.join(palette_data.get('colors', []))}")
