@@ -95,6 +95,7 @@ class BaseLLM(BaseModel):
             
             # Extract text from response
             if 'choices' in result and len(result['choices']) > 0:
+                # Return both the text and raw response
                 return result['choices'][0]['message']['content']
             else:
                 logger.error(f"Unexpected response format: {result}")

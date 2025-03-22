@@ -91,12 +91,15 @@ def palette_demystify(request: PaletteDemystifyRequest):
         
         # Call LLM
         logger.info("Calling LLM API...")
-        content = llm.call_api(prompt)
+        llm_response = llm.call_api(prompt)
+        content = llm_response["text"]
+        raw_response = llm_response["raw_response"]
         logger.info("LLM API call completed")
         
         return {
             "success": True,
             "response": content,
+            "raw_response": raw_response,
             "provider": request.llm_provider
         }
         

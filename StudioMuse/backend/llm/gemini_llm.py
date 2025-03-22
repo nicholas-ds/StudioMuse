@@ -51,7 +51,7 @@ class GeminiLLM(BaseLLM):
             logger.error(f"Error initializing Gemini LLM: {e}")
             raise
             
-    def call_api(self, prompt: str) -> str:
+    def call_api(self, prompt: str) -> Dict[str, Any]:
         """
         Call the Gemini API with the given prompt.
         
@@ -59,7 +59,7 @@ class GeminiLLM(BaseLLM):
             prompt: The text prompt to send to the API
             
         Returns:
-            The generated text response
+            A dictionary containing both the raw response and the extracted text
         """
         try:
             # Import here to avoid circular imports
@@ -80,8 +80,11 @@ class GeminiLLM(BaseLLM):
                 config=generation_config
             )
             
-            # Return the text
-            return response.text
+            # Return both the raw response and the text
+            return {
+                "text": response.text,
+                "raw_response": response
+            }
         except Exception as e:
             logger.error(f"Error calling Gemini API: {e}")
             raise 

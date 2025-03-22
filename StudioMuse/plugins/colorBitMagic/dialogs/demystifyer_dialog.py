@@ -107,7 +107,9 @@ class DemystifyerDialog(BaseDialog):
                     if response.get("success"):
                         # Handle successful API response
                         result = response.get("response")
+                        raw_response = response.get("raw_response")
                         provider = response.get("provider", "unknown")
+                        Gimp.message(f"Raw response: {raw_response}")
                         self.log_message(f"API request successful! Received response from {provider} provider.")
                         
                         # Format the result for display
@@ -167,8 +169,6 @@ class DemystifyerDialog(BaseDialog):
         Returns:
             A list of structured data for display_results.
         """
-        # Log the raw response for debugging
-        self.log_message(f"Raw API response: {str(result)}")
 
         # If result is a string, attempt to parse it
         if isinstance(result, str):
