@@ -1,0 +1,100 @@
+StudioMuse/                    # Project root
+├── backend/                   # Backend FastAPI service
+│   ├── api.py                 # Main FastAPI app (slimmed down to routing)
+│   ├── config.py              # Backend configuration
+│   ├── routes/                # Modularized API endpoints
+│   │   ├── __init__.py        # Exports all routers
+│   │   ├── palette.py         # Palette-related endpoints
+│   │   ├── vision.py          # Vision/ML-related endpoints
+│   │   ├── structure.py       # Measurement endpoints
+│   │   └── settings.py        # Settings endpoints
+│   ├── models/                # Pydantic data models
+│   │   ├── __init__.py
+│   │   ├── palette.py         # Palette-related models
+│   │   ├── vision.py          # Vision-related models
+│   │   └── structure.py       # Measurement-related models
+│   ├── llm/                   # LLM integration modules
+│   │   ├── base_llm.py        # Base LLM class
+│   │   ├── gemini_llm.py      # Google Gemini integration
+│   │   ├── llm_service_provider.py
+│   │   ├── perplexity_llm.py  # Perplexity integration
+│   │   └── prompts.py         # LLM prompts
+│   ├── requirements.txt       # Backend dependencies
+│   └── utils/                 # Backend utilities
+├── studiomuse/                # GIMP plugin
+│   ├── studiomuse.py          # Main entry point
+├── core/                      # Core components (migrated from existing code)
+│   ├── __init__.py
+│   ├── base_dialog.py         # Migrated from existing BaseDialog
+│   ├── dialog_manager.py      # Migrated from existing DialogManager
+│   ├── plugin_base.py         # New base class for plugins
+│   └── utils/                 # Shared utilities migrated from ColorBitMagic
+│       ├── __init__.py
+│       ├── config.py          # Configuration management
+│       ├── api/               # Modularized API client utilities
+│       │   ├── __init__.py    # Exports client manager and convenience functions
+│       │   ├── base.py        # BaseApiClient with shared functionality
+│       │   ├── client_manager.py # Factory/manager for API clients
+│       │   ├── clients/       # Specialized API clients
+│       │   │   ├── __init__.py
+│       │   │   ├── palette.py # PaletteApiClient 
+│       │   │   ├── vision.py  # VisionApiClient
+│       │   │   └── structure.py # StructureApiClient
+│       │   └── models/        # API data models
+│       │       ├── __init__.py
+│       │       ├── palette.py
+│       │       └── vision.py
+│       ├── palette/           # Palette-related utilities
+│       │   ├── __init__.py
+│       │   ├── models.py      # Migrated from palette_models.py
+│       │   └── processor.py   # Migrated from palette_processor.py
+│       └── ui/                # UI utilities
+│           ├── __init__.py
+│           ├── text.py        # Text formatting from BaseDialog
+│           └── widgets.py     # UI widget utilities
+├── tools/                     # All plugin tool logic
+│   ├── visionlab/             # Vision-model-powered tools
+│   │   ├── __init__.py
+│   │   ├── base.py            # BaseVisionTool class
+│   │   ├── scene_abstraction.py
+│   │   ├── depth_viewer.py
+│   │   └── visionlab_stack.py
+│   ├── structure/             # Measurement, annotation, scaling tools
+│   │   ├── __init__.py
+│   │   ├── measuring_tool.py
+│   │   └── structure_stack.py
+│   ├── analysis/              # Color parsing, image analysis tools
+│   │   ├── __init__.py
+│   │   ├── colorbitmagic/     # Migrated ColorBitMagic plugin
+│   │   │   ├── __init__.py
+│   │   │   ├── demystifyer.py # Migrated from demystifyer_dialog.py
+│   │   │   ├── add_palette.py # Migrated from add_palette_dialog.py
+│   │   │   └── utils.py       # ColorBitMagic-specific utilities
+│   │   └── analysis_stack.py
+│   └── settings/              # Global preferences and config
+│       ├── __init__.py
+│       └── settings_stack.py
+├── ui/                        # All static UI files
+│   ├── templates/             # Templates and shared UI definitions
+│   │   ├── plugin_page.ui     # Base template for plugin pages
+│   │   ├── tool_panel.ui      # Reusable tool panel template
+│   │   └── styles/
+│   │       ├── colors.css     # Color definitions
+│   │       └── widgets.css    # Widget styling
+│   ├── visionlab/
+│   │   └── scene_abstraction.ui
+│   ├── structure/
+│   │   └── measuring_tool.ui
+│   ├── analysis/
+│   │   └── colorbitmagic/     # Migrated UI files from ColorBitMagic
+│   │       ├── demystify.ui   # Renamed from dmMain_update_populated.xml
+│   │       └── add_palette.ui # Renamed from addPalette.xml
+│   └── settings/
+│       └── preferences.ui
+└── config/                    # Configuration files
+    ├── default.json           # Default settings
+    ├── user.json              # User settings that override defaults
+    └── plugins/               # Plugin-specific settings
+        ├── analysis/
+        │   └── colorbitmagic.json  # Migrated from settings.json
+        └── [other plugin configs]
