@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <requires lib="gtk+" version="3.18"/>
-  <object class="GtkNotebook" id="visionLabNotebook">
+  <object class="GtkNotebook" id="visionlabNotebook">
     <property name="visible">True</property>
     <property name="can-focus">True</property>
     <child>
