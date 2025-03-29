@@ -305,7 +305,7 @@
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label">ColorBitMagic</property>
+                    <property name="label">Palette Demystify</property>
                   </object>
                   <packing>
                     <property name="tab-fill">False</property>

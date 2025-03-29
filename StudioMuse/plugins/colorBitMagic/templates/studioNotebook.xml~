@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.18"/>
-  <object class="GtkApplicationWindow" id="studioNotebookWindow">
+  <object class="GtkApplicationWindow" id="dmMainWindow">
     <property name="can-focus">False</property>
     <child>
       <object class="GtkBox">
@@ -14,6 +14,8 @@
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="halign">center</property>
+            <property name="margin-top">10</property>
+            <property name="margin-bottom">10</property>
             <property name="stack">mainStack</property>
           </object>
           <packing>
@@ -179,7 +181,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton">
+                          <object class="GtkButton" id="submitButton">
                             <property name="label" translatable="yes">Submit</property>
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
@@ -321,6 +323,7 @@
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="margin-top">10</property>
                         <property name="margin-bottom">20</property>
                         <property name="label" translatable="yes">Add Your Physical Palette</property>
                         <attributes>
@@ -356,6 +359,7 @@
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
+                                    <property name="margin-start">5</property>
                                     <property name="label" translatable="yes">Physical Palette Name</property>
                                     <property name="xalign">0</property>
                                     <attributes>
@@ -372,6 +376,7 @@
                                   <object class="GtkEntry" id="paletteNameEntry">
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
+                                    <property name="margin-start">5</property>
                                     <property name="placeholder-text" translatable="yes">ex. Mont Marte 52 piece soft oil pastel kit</property>
                                   </object>
                                   <packing>
