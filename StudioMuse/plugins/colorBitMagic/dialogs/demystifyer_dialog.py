@@ -1,6 +1,8 @@
 import gi
 from gi.repository import Gimp
 import json
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, Pango
 from .base_dialog import BaseDialog
 from colorBitMagic_utils import (
     populate_palette_dropdown, 
@@ -274,29 +276,29 @@ class DemystifyerDialog(BaseDialog):
         try:
             # Parse RGB string like "rgb(0.020, 0.027, 0.039)"
             rgb_values = rgb_str.replace("rgb(", "").replace(")", "").split(",")
-            r = int(float(rgb_values[0].strip()) * 255)
-            g = int(float(rgb_values[1].strip()) * 255)
-            b = int(float(rgb_values[2].strip()) * 255)
-            hex_value = f"#{r:02x}{g:02x}{b:02x}"
+            
+            # Keep as floating point values
+            r = float(rgb_values[0].strip())
+            g = float(rgb_values[1].strip())
+            b = float(rgb_values[2].strip())
+            
+            # Generate hex from floating point values
+            hex_value = f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
             return hex_value
         except (ValueError, IndexError) as e:
             log_error("RGB parsing error", e)
             return hex_value
     
-    def _create_color_swatch(self, hex_value, width=30, height=20):
-        """Create a color swatch widget with the specified color and dimensions"""
-        gi.require_version("Gtk", "3.0")
-        from gi.repository import Gtk, Gdk
-        
+    def _create_color_swatch(self, color_data, width=30, height=20):
+        """Create a color swatch with the specified color data"""
         drawing_area = Gtk.DrawingArea()
         drawing_area.set_size_request(width, height)
         
-        # Store hex value in a closure for the draw callback
-        def draw_callback(widget, cr, hex_val=hex_value):
-            color_rgba = Gdk.RGBA()
-            color_rgba.parse(hex_val)
-            cr.set_source_rgba(color_rgba.red, color_rgba.green, color_rgba.blue, color_rgba.alpha)
-            cr.rectangle(0, 0, widget.get_allocated_width(), widget.get_allocated_height())
+        # Use the original RGB values from color_data (0.0-1.0 range)
+        def draw_callback(widget, cr, rgb=color_data["rgb"]):
+            # Use RGB values directly - they're already in the 0.0-1.0 range that GTK expects
+            cr.set_source_rgb(rgb["r"], rgb["g"], rgb["b"])
+            cr.rectangle(0, 0, width, height)
             cr.fill()
             return False
         
@@ -333,8 +335,8 @@ class DemystifyerDialog(BaseDialog):
         from gi.repository import Gtk, Gdk, Pango
         
         # Get required UI elements
-        result_container = self.builder.get_object(result_widget_id)  # GtkScrolledWindow
-        right_panel = self.builder.get_object("colorSwatch")  # Drawing area for color display
+        result_container = self.builder.get_object(result_widget_id)
+        right_panel = self.builder.get_object("colorSwatch")
         
         if not result_container or not right_panel:
             self.log_message("Error: Could not find required UI elements.")
@@ -354,14 +356,38 @@ class DemystifyerDialog(BaseDialog):
         self.color_results = []
         
         for item in formatted_data:
-            # Convert RGB string to hex
-            hex_value = self._parse_rgb_string(item['rgb_color'])
+            # Get RGB values from the rgb_color string
+            rgb_str = item['rgb_color']
+            
+            # Parse the RGB string and create rgb dictionary
+            try:
+                # Parse RGB string like "rgb(0.038, 0.112, 0.238)"
+                rgb_values = rgb_str.replace("rgb(", "").replace(")", "").split(",")
+                
+                # Convert to float values
+                r = float(rgb_values[0].strip())
+                g = float(rgb_values[1].strip())
+                b = float(rgb_values[2].strip())
+                
+                # Generate hex from floating point values
+                hex_value = f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
+                
+                # Create proper rgb dictionary
+                rgb_dict = {"r": r, "g": g, "b": b}
+                
+                # Debug the parsed RGB values
+                self.log_message(f"Parsed RGB: {rgb_dict} from {rgb_str}")
+            except Exception as e:
+                self.log_message(f"Error parsing RGB string: {rgb_str} - {e}")
+                hex_value = "#000000"
+                rgb_dict = {"r": 0, "g": 0, "b": 0}
             
             # Create a color entry with all needed information
             color_entry = {
                 "name": item['gimp_color_name'],
                 "hex_value": hex_value,
                 "rgb_color": item['rgb_color'],
+                "rgb": rgb_dict,  # Add the parsed rgb dict
                 "physical_color_name": item['physical_color_name'],
                 "mixing_suggestions": item['mixing_suggestions']
             }
@@ -401,7 +427,7 @@ class DemystifyerDialog(BaseDialog):
             label.set_ellipsize(Pango.EllipsizeMode.END)
             
             # Create color preview swatch
-            drawing_area = self._create_color_swatch(color["hex_value"], 30, 20)
+            drawing_area = self._create_color_swatch(color)
             
             # Add physical color information
             physical_label = Gtk.Label(xalign=0)
@@ -463,7 +489,7 @@ class DemystifyerDialog(BaseDialog):
         )
         
         # Create a larger color swatch
-        new_drawing_area = self._create_color_swatch(color_data["hex_value"], 200, 100)
+        new_drawing_area = self._create_color_swatch(color_data)
         
         # Create labels for color information
         name_label = Gtk.Label(xalign=0)

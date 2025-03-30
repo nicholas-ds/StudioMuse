@@ -100,9 +100,9 @@ class BackendAPIClient:
                 
                 # Format for the API payload
                 serializable_colors[name] = {
-                    "R": color_data.rgb["r"] / 255.0,  # Convert back to 0-1 range
-                    "G": color_data.rgb["g"] / 255.0,
-                    "B": color_data.rgb["b"] / 255.0,
+                    "R": color_data.rgb["r"],  # Already in 0-1 range
+                    "G": color_data.rgb["g"],
+                    "B": color_data.rgb["b"],
                     "A": 1.0
                 }
             

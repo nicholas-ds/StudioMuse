@@ -2,6 +2,9 @@
 import os
 import json
 from gi.repository import Gimp, Gegl
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk
 
 from .palette_models import PaletteData, PhysicalPalette, ColorData
 
@@ -91,19 +94,19 @@ class PaletteProcessor:
     def convert_gegl_to_color_data(color: Gegl.Color, name: str = "Unnamed") -> ColorData:
         """Convert a Gegl.Color to a ColorData object."""
         try:
-            # Extract RGBA values
+            # Extract RGBA values - already in 0.0-1.0 range
             rgba = color.get_rgba()
             
-            # Convert to 0-255 range
-            r = int(rgba[0] * 255)
-            g = int(rgba[1] * 255)
-            b = int(rgba[2] * 255)
+            # Store floating point RGB values with precision
+            r = round(rgba[0], 3)
+            g = round(rgba[1], 3)
+            b = round(rgba[2], 3)
             
-            # Create hex color
-            hex_value = f"#{r:02x}{g:02x}{b:02x}"
+            # Create hex color (converting to 0-255 only for hex generation)
+            hex_value = f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
             Gimp.message(f"Converted Gegl.Color to ColorData: {hex_value}")
             
-            # Create RGB dict
+            # Create RGB dict with floating point values
             rgb = {"r": r, "g": g, "b": b}
             Gimp.message(f"RGB values: {rgb}")
             
@@ -111,7 +114,7 @@ class PaletteProcessor:
             return ColorData(name=name, hex_value=hex_value, rgb=rgb)
         except Exception as e:
             log_error(f"Failed to convert Gegl.Color to ColorData", e)
-            return ColorData(name=name, hex_value="#000000", rgb={"r": 0, "g": 0, "b": 0})
+            return ColorData(name=name, hex_value="#000000", rgb={"r": 0.0, "g": 0.0, "b": 0.0})
             
     @staticmethod
     def get_all_physical_palettes(base_dir: str = None) -> list:
