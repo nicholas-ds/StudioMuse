@@ -2,18 +2,10 @@
 
 ## Overview
 
-StudioMuse is a GIMP plugin-based application designed to enhance artistic workflows with physical media such as oil paint, pastels, or watercolors, by integrating advanced color analysis and AI features. The primary plugin, **colorBitMagic**, assists artists in matching colors from reference images to their personal palettes, such as a particular set of oil pastels or a specific set of watercolor paints.
+StudioMuse is a plugin based suite of tools and mini applications built to enhance artistic workflows with physical media such as oil paint, pastels, or watercolors, by integrating advanced color analysis and AI features. The tools are designed and built with traditional artists in mind. The first complete tool, **colorBitMagic**, assists artists in coordinating colors from reference images to their physical palettes, such as a particular set of oil pastels or a specific set of watercolor paints.
 
-The integrated LLM also gives advice and insights into how to use the colors in your physical palette. Perplexity Sonar is used for this as their sonar model has built-in web search functionality that will be important for identifying particular physical palettes.
+Physical palettes are generated using Perplexity's web search API. Physical palettes are saved as JSON files to store for repeated use and future tools to utilize.
 
-## Current Development
-
-### Features
-
-- **colorBitMagic Plugin**:
-  - Extracts color data from user-created palettes.
-  - Sends color data to the Perplexity Sonar API for color matching and art tips.
-  - Integrates with GIMP's palette editor for enhanced user interaction.
 
 ### Technical Requirements
 
@@ -44,13 +36,39 @@ The integrated LLM also gives advice and insights into how to use the colors in 
 ### Usage
 
 1. Open a reference photo in GIMP.
-2. Use GIMP selection tools (such as the lasso tool or Ellipse select tool) to select an area of the image you would like to extract colors from.
-3. Create a new palette in GIMP's palette editor (Colors > Palettes > New Palette).
-4. Open colorBitMagic plugin via Filters > ColorBitMagic > ColorBitMagic
+2. Navigate to Extensions > StudioMuse > StudioMuse Suite to open the main application window.
+3. The suite contains several tools organized into categories:
+   - **Analysis**: Color matching and palette tools
+   - **Structure**: Image composition tools
+   - **VisionLab**: Advanced visualization features
+   - **Settings**: Configuration options
 
-### Palette Demystifyer
+### ColorBitMagic Analysis Tools
 
-This is a tool that will help you approximate the colors in your physical art palette to the colors in the GIMP palette you generated with GIMP's palette editor.
+#### Palette Demystifyer
+This tool teaches you practical color matching theory by bridging the gap between your physical art supplies and
+your reference photos.
+
+1. In the Analysis tab, select the "Palette Demystifyer" tool
+2. Select your GIMP palette from the dropdown
+3. Select your physical palette from the second dropdown
+4. Click "Submit" to analyze
+5. Results will show:
+   - Color swatches for visual reference
+   - RGB values for digital colors
+   - Matching physical colors from your art supplies
+   - Mixing suggestions for complex colors
+
+#### Physical Palette Creator
+
+1. Click "Add Physical Palette" in the Analysis tab
+2. Enter a description of your art supplies, including:
+   - Brand name
+   - Number of colors in the set
+   - Product name/line
+   Example: "Mont Marte 52 Piece Oil Pastel Kit"
+3. Click "Generate" to create a digital version of your physical palette
+4. Review the results and click "Save" to store for future use
 
 ## How it works
 
@@ -71,10 +89,46 @@ This is a tool that will help you approximate the colors in your physical art pa
 4. Click "Submit", wait for LLM response.
 5. The LLM will return the list of colors in your GIMP palette, matched with the closest physical palette color in your set.
 
-
-
-
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file.
+
+### Environment Variables
+
+Required API keys:
+- `PERPLEXITY_KEY`: For color matching and physical palette generation
+- `GEMINI_API_KEY`: For advanced AI features and analysis
+
+You can set these using:
+```bash
+export PERPLEXITY_KEY='your-perplexity-key'
+export GEMINI_API_KEY='your-gemini-key'
+```
+
+### Development Status
+
+- **ColorBitMagic Plugin**: ✅ Complete!
+  - Full palette analysis and matching
+  - Physical palette generation
+  - LLM-powered color theory assistance
+
+- **Proportia Plugin**: 🚧 In Development
+  - Measurement and scaling tools
+  - Canvas planning features
+  - Expected release: TBD
+
+- **VisionLab**: 📋 Planned
+  - Vision model based tools TBD
+  
+
+### Configuration
+
+Configuration files are stored in:
+- Windows: `%APPDATA%\GIMP\3.0\studiomuse\`
+- Mac: `~/Library/Application Support/GIMP/3.0/studiomuse\`
+
+The plugin supports configuration through:
+1. Environment variables (highest priority)
+2. User configuration files
+3. Default configurations
 
