@@ -12,6 +12,44 @@ Physical palettes are generated using Perplexity's web search API. Physical pale
 - **Platform**: GIMP 3.x
 - **Backend**: Python, Perplexity Sonar API, Google Gemini API
 
+- ### Environment Variables
+
+Required API keys:
+- `PERPLEXITY_KEY`: For color matching and physical palette generation
+- `GEMINI_API_KEY`: For advanced AI features and analysis
+
+You can set these using:
+```bash
+export PERPLEXITY_KEY='your-perplexity-key'
+export GEMINI_API_KEY='your-gemini-key'
+```
+
+### Development Status
+
+- **ColorBitMagic Plugin**: ✅ Complete!
+  - Full palette analysis and matching
+  - Physical palette generation
+  - LLM-powered color theory assistance
+
+- **Proportia Plugin**: 🚧 In Development
+  - Measurement and scaling tools
+  - Canvas planning
+
+- **VisionLab**: 📋 Planned
+  - Vision model based tools TBD
+  
+
+### Configuration
+
+Configuration files are stored in:
+- Windows: `%APPDATA%\GIMP\3.0\studiomuse\`
+- Mac: `~/Library/Application Support/GIMP/3.0/studiomuse\`
+
+The plugin supports configuration through:
+1. Environment variables (highest priority)
+2. User configuration files
+3. Default configurations
+
 ### Installation
 
 1. Ensure GIMP 3.x is installed.
@@ -93,42 +131,5 @@ your reference photos.
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file.
 
-### Environment Variables
 
-Required API keys:
-- `PERPLEXITY_KEY`: For color matching and physical palette generation
-- `GEMINI_API_KEY`: For advanced AI features and analysis
-
-You can set these using:
-```bash
-export PERPLEXITY_KEY='your-perplexity-key'
-export GEMINI_API_KEY='your-gemini-key'
-```
-
-### Development Status
-
-- **ColorBitMagic Plugin**: ✅ Complete!
-  - Full palette analysis and matching
-  - Physical palette generation
-  - LLM-powered color theory assistance
-
-- **Proportia Plugin**: 🚧 In Development
-  - Measurement and scaling tools
-  - Canvas planning features
-  - Expected release: TBD
-
-- **VisionLab**: 📋 Planned
-  - Vision model based tools TBD
-  
-
-### Configuration
-
-Configuration files are stored in:
-- Windows: `%APPDATA%\GIMP\3.0\studiomuse\`
-- Mac: `~/Library/Application Support/GIMP/3.0/studiomuse\`
-
-The plugin supports configuration through:
-1. Environment variables (highest priority)
-2. User configuration files
-3. Default configurations
 
