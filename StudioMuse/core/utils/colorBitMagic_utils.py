@@ -208,9 +208,7 @@ def clean_and_verify_json(json_string):
 def save_palette_to_file(llm_palette):
     """Saves the LLMPhysicalPalette instance to a JSON file using PaletteProcessor."""
     try:
-        # Check if we have new style palette or old dict format
         if hasattr(llm_palette, 'to_dict'):
-            # This is already a PaletteData object
             palette_data = llm_palette
         else:
             # Create a PhysicalPalette from the old data format
@@ -218,7 +216,7 @@ def save_palette_to_file(llm_palette):
             for color_name in llm_palette.colors_listed:
                 colors.append(ColorData(
                     name=color_name,
-                    hex_value="#000000"  # Default - we don't have hex in old format
+                    hex_value="#000000"  
                 ))
                 
             palette_data = PhysicalPalette(
@@ -228,7 +226,6 @@ def save_palette_to_file(llm_palette):
                 additional_notes=llm_palette.additional_notes
             )
         
-        # Save using PaletteProcessor
         filepath = PaletteProcessor.save_palette(palette_data)
         if filepath:
             Gimp.message(f"Palette '{palette_data.name}' saved successfully.")
