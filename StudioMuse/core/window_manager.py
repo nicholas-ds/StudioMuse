@@ -3,33 +3,36 @@
 
 import os
 from gi.repository import Gtk, Gimp
+from .utils.ui import UILoader  # New utility class we should create
 
 class WindowManager:
-    """Manages the main application window and UI components."""
+    """
+    Manages the main application window and UI components.
+    Implements the suite-style UI architecture as defined in suiteUpdate.md
+    """
     
     def __init__(self):
-        self.builder = Gtk.Builder()
+        self.ui_loader = UILoader()
+        self.main_builder = None
         self.main_window = None
         self.main_stack = None
         self.notebooks = {}
 
     def load_main_ui(self):
-        """Load the main window shell and initialize UI components"""
+        """
+        Loads the main window shell and initializes UI components.
+        Following the "Main UI Rule" from suiteUpdate.md for instant loading.
+        """
         try:
-            script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            main_ui_path = os.path.join(script_dir, "ui", "main_window.xml")
+            # Load the main shell and get both builder and widgets
+            self.main_builder, self.main_window, self.main_stack = self.ui_loader.load_main_shell()
             
-            self.builder.add_from_file(main_ui_path)
-            self.main_window = self.builder.get_object("mainWindow")
-            self.main_stack = self.builder.get_object("mainStack")
+            # Connect main window signals
+            self.main_builder.connect_signals(self)
             
-            # Connect signals
-            self.builder.connect_signals(self)
-            
-            # Load each notebook dynamically
+            # Load notebooks
             self.load_notebooks()
             
-            # Show the window
             self.main_window.show_all()
             
         except Exception as e:
@@ -37,10 +40,11 @@ class WindowManager:
             print(f"Error loading main UI: {e}")
     
     def load_notebooks(self):
-        """Load each notebook from its respective XML file"""
+        """
+        Dynamically loads each notebook following the modular XML plan.
+        Each notebook is loaded from its respective XML file in the ui/ directory.
+        """
         try:
-            script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            
             notebook_categories = {
                 "analysis": "Analysis",
                 "structure": "Structure", 
@@ -50,19 +54,16 @@ class WindowManager:
             
             for category_id, display_name in notebook_categories.items():
                 try:
-                    notebook_path = os.path.join(script_dir, "ui", category_id, f"{category_id}_notebook.xml")
-                    
-                    notebook_builder = Gtk.Builder()
-                    notebook_builder.add_from_file(notebook_path)
-                    
-                    notebook = notebook_builder.get_object(f"{category_id}Notebook")
-                    
-                    if notebook:
-                        self.main_stack.add_titled(notebook, category_id, display_name)
-                        self.notebooks[category_id] = notebook_builder
-                        notebook_builder.connect_signals(self)
-                    else:
-                        Gimp.message(f"Could not find notebook object for {category_id}")
+                    notebook_builder = self.ui_loader.load_notebook(category_id)
+                    if notebook_builder:
+                        notebook = notebook_builder.get_object(f"{category_id}Notebook")
+                        if notebook:
+                            self.main_stack.add_titled(notebook, category_id, display_name)
+                            self.notebooks[category_id] = notebook_builder
+                            # Connect signals for this notebook
+                            notebook_builder.connect_signals(self)
+                        else:
+                            Gimp.message(f"Could not find notebook object for {category_id}")
                         
                 except Exception as e:
                     Gimp.message(f"Error loading {category_id} notebook: {e}")
@@ -72,15 +73,32 @@ class WindowManager:
             Gimp.message(f"Error in load_notebooks: {e}")
             print(f"Error in load_notebooks: {e}")
 
-    # Signal handlers
-    def on_dmMainWindow_destroy(self, widget):
+    # Signal handlers with debug prints
+    def on_main_window_destroy(self, widget):
+        print("Window destroy signal received")
         Gtk.main_quit()
     
     def on_submit_clicked(self, button):
+        print("Submit button clicked")
         Gimp.message("Submit button clicked")
     
     def on_add_physical_palette_clicked(self, button):
+        print("Add physical palette button clicked")
         Gimp.message("Add physical palette button clicked")
     
     def on_exit_clicked(self, button):
-        self.main_window.destroy() 
+        print("Exit button clicked")
+        self.main_window.destroy()
+
+    # Additional handlers from analysis_notebook.xml
+    def on_save_clicked(self, button):
+        print("Save button clicked")
+        Gimp.message("Save button clicked")
+    
+    def on_generate_clicked(self, button):
+        print("Generate button clicked")
+        Gimp.message("Generate button clicked")
+    
+    def on_close_clicked(self, button):
+        print("Close button clicked")
+        Gimp.message("Close button clicked") 
