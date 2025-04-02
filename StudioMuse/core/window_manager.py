@@ -75,8 +75,20 @@ class WindowManager:
 
     # Signal handlers with debug prints
     def on_main_window_destroy(self, widget):
+        """Handle window destruction and cleanup"""
         print("Window destroy signal received")
-        Gtk.main_quit()
+        try:
+            # Add any cleanup code here
+            # For example:
+            # - Save any pending changes
+            # - Close open file handles
+            # - Stop any running background processes
+            
+            Gtk.main_quit()
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
+            # Ensure we still quit even if cleanup fails
+            Gtk.main_quit()
     
     def on_submit_clicked(self, button):
         print("Submit button clicked")
@@ -86,10 +98,6 @@ class WindowManager:
         print("Add physical palette button clicked")
         Gimp.message("Add physical palette button clicked")
     
-    def on_exit_clicked(self, button):
-        print("Exit button clicked")
-        self.main_window.destroy()
-
     # Additional handlers from analysis_notebook.xml
     def on_save_clicked(self, button):
         print("Save button clicked")
