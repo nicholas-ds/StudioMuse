@@ -37,20 +37,27 @@ class ColorBitMagic:
             builder (Gtk.Builder): The builder instance containing analysis UI elements
         """
         self.builder = builder
-        # Initialize widget references
+        # Initialize widget references for both tabs
         widget_ids = [
+            # Demystify tab widgets
             'submitButton',
             'paletteDropdown',
             'physicalPaletteDropdown',
-            'paletteNameEntry',
-            'resultListBox',  # Updated from resultsTextView
+            'resultListBox',
             'rightPanel',
             'colorSwatch',
             'colorNameLabel',
             'rgbLabel',
             'physicalColorLabel',
-            'mixingSuggestionsLabel'
+            'mixingSuggestionsLabel',
+            # Add Palette tab widgets
+            'paletteNameEntry',
+            'resultsTextView',
+            'saveButton',
+            'generateButton',
+            'closeButton'
         ]
+        
         for widget_id in widget_ids:
             self.widgets[widget_id] = self.builder.get_object(widget_id)
             
@@ -320,18 +327,141 @@ class ColorBitMagic:
     
     def on_save_clicked(self, button):
         """Handle saving the current palette configuration."""
-        print("Save button clicked")
-        Gimp.message("Saving palette configuration...")
+        if not hasattr(self, 'current_palette'):
+            self.log_message("No palette to save. Please generate a palette first.")
+            return
+
+        try:
+            # Define the output directory for physical palettes
+            gimp_dir = Gimp.directory()
+            physical_palettes_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+            
+            # Save the palette data
+            filepath = save_json_to_file(
+                data=self.current_palette,
+                filename=self.current_palette["name"],
+                directory=physical_palettes_dir
+            )
+            
+            if filepath:
+                self.log_message(f"Palette '{self.current_palette['name']}' saved successfully.")
+                # Refresh the physical palette dropdown
+                populate_physical_palette_dropdown(self.builder)
+                # Switch back to first tab
+                notebook = self.builder.get_object("analysisNotebook")
+                if notebook:
+                    notebook.set_current_page(0)
+            else:
+                self.log_message(f"Failed to save palette '{self.current_palette['name']}'.")
+                
+        except Exception as e:
+            log_error("Error saving palette", e)
+            self.log_message(f"Error saving palette: {str(e)}")
     
     def on_generate_clicked(self, button):
-        """Handle palette generation request."""
-        print("Generate button clicked")
-        Gimp.message("Generating palette...")
-    
+        """Handle generating palette from LLM."""
+        if not self.widgets.get('paletteNameEntry') or not self.widgets.get('resultsTextView'):
+            self.log_message("Required widgets not found")
+            return
+
+        entry_text = self.widgets['paletteNameEntry'].get_text()
+        if not entry_text:
+            self.log_message("Please enter a palette description")
+            return
+
+        try:
+            # Call the backend API
+            self.log_message(f"Sending request to API with text: {entry_text}")
+            result = api_client.create_physical_palette(entry_text)
+            
+            # Debug log the raw response
+            self.log_message(f"Raw API response: {result}")
+            
+            if not result:
+                self.log_message("Error: Received empty response from API")
+                return
+                
+            if not result.get("success", False):
+                error_msg = result.get("error", "Unknown error")
+                self.log_message(f"API error: {error_msg}")
+                return
+                
+            # Get the raw response and validate it
+            raw_response = result.get("response", "")
+            if not raw_response:
+                self.log_message("Error: Empty response data from API")
+                return
+                
+            # Clean the response if it contains markdown code blocks
+            if isinstance(raw_response, str):
+                raw_response = raw_response.replace('```json', '').replace('```', '').strip()
+            
+            try:
+                # Parse JSON response
+                json_response = json.loads(raw_response) if isinstance(raw_response, str) else raw_response
+                
+                # Validate required fields
+                required_fields = ['set_name', 'colors', 'piece_count']
+                missing_fields = [field for field in required_fields if field not in json_response]
+                if missing_fields:
+                    self.log_message(f"Error: Missing required fields in response: {missing_fields}")
+                    return
+                
+                # Store palette data
+                self.current_palette = {
+                    "name": json_response["set_name"],
+                    "raw_response": raw_response,
+                    "colors": json_response['colors'],
+                    "piece_count": json_response['piece_count']
+                }
+
+                # Display the results in the text view
+                self.display_palette_text(json_response)
+                self.log_message("Palette generated successfully")
+                
+            except json.JSONDecodeError as e:
+                log_error(f"JSON parsing error. Raw response: {raw_response}", e)
+                self.log_message(f"Error parsing API response: {str(e)}")
+            
+        except Exception as e:
+            log_error(f"Error in palette generation. Entry text: {entry_text}", e)
+            self.log_message(f"Error generating palette: {str(e)}")
+
+    def display_palette_text(self, palette_data):
+        """Display palette information in the text view."""
+        text_view = self.widgets.get('resultsTextView')
+        if not text_view:
+            self.log_message("Error: Results text view not found")
+            return
+            
+        try:
+            buffer = text_view.get_buffer()
+            
+            # Format the text
+            formatted_text = []
+            formatted_text.append(f"PALETTE: {palette_data.get('set_name', 'Unknown')}")
+            formatted_text.append(f"Number of Colors: {palette_data.get('piece_count', 'Unknown')}")
+            formatted_text.append("\nCOLORS:")
+            
+            for color in palette_data.get('colors', []):
+                formatted_text.append(f"  • {color}")
+            
+            if notes := palette_data.get('additional_notes'):
+                formatted_text.append(f"\nNotes:\n{notes}")
+                
+            # Set the text
+            buffer.set_text('\n'.join(formatted_text))
+            
+        except Exception as e:
+            log_error("Error displaying palette text", e)
+            self.log_message(f"Error displaying palette: {str(e)}")
+
     def on_close_clicked(self, button):
         """Handle closing the current view."""
-        print("Close button clicked")
-        Gimp.message("Closing current view...")
+        notebook = self.builder.get_object("analysisNotebook")
+        if notebook:
+            notebook.set_current_page(0)  # Switch back to first tab
+        self.log_message("Returning to main view...")
 
     def cleanup(self):
         """Clean up resources when the tool is being closed"""
