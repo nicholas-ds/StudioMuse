@@ -19,6 +19,8 @@ class WindowManager:
         self.main_stack = None
         self.notebooks = {}
         self.tool_handlers = {}  # Add this to store tool handlers
+        # Add flag to track window state
+        self.is_closing = False
 
     def load_main_ui(self):
         """
@@ -29,7 +31,10 @@ class WindowManager:
             # Load the main shell and get both builder and widgets
             self.main_builder, self.main_window, self.main_stack = self.ui_loader.load_main_shell()
             
-            # Connect main window signals
+            # Connect destroy signal directly to the window
+            self.main_window.connect("destroy", self.on_main_window_destroy)
+            
+            # Connect other main window signals
             self.main_builder.connect_signals(self)
             
             # Load notebooks
@@ -83,10 +88,31 @@ class WindowManager:
             Gimp.message(f"Error in load_notebooks: {e}")
             print(f"Error in load_notebooks: {e}")
 
-    # Remove all analysis-related handlers from WindowManager
     def on_main_window_destroy(self, widget):
-        print("Window destroy signal received")
-        Gtk.main_quit()
+        """Handle proper cleanup when window is destroyed"""
+        try:
+            if self.is_closing:
+                return
+            self.is_closing = True
+            
+            # Clean up tool handlers
+            for handler in self.tool_handlers.values():
+                if hasattr(handler, 'cleanup'):
+                    handler.cleanup()
+            
+            # Clear references
+            self.tool_handlers.clear()
+            self.notebooks.clear()
+            self.main_builder = None
+            self.main_window = None
+            self.main_stack = None
+            
+            # Quit the GTK main loop
+            Gtk.main_quit()
+            
+        except Exception as e:
+            print(f"Error during window cleanup: {e}")
+            Gtk.main_quit()
 
     # Additional handlers from analysis_notebook.xml
     def on_close_clicked(self, button):

@@ -85,7 +85,7 @@ class BackendAPIClient:
         """
         try:
             # Import the palette processor here to avoid circular imports
-            from .palette_processor import PaletteProcessor
+            from core.models.palette_processor import PaletteProcessor
             
             # Convert GIMP palette colors to a serializable format
             serializable_colors = {}

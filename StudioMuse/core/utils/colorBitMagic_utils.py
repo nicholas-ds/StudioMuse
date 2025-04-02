@@ -104,8 +104,8 @@ def log_palette_colormap(builder):
                 continue
 
             if isinstance(color, Gegl.Color):  # Ensure it's a Gegl.Color object
-                rgba = color.get_rgba()  # Get RGBA values
-                Gimp.message(f"Color: R={rgba[0]:.3f}, G={rgba[1]:.3f}, B={rgba[2]:.3f}, A={rgba[3]:.3f}")
+                rgba = color.get_rgba()  # Get RGBA values at full precision
+                Gimp.message(f"Color: R={rgba[0]}, G={rgba[1]}, B={rgba[2]}, A={rgba[3]}")
             else:
                 Gimp.message(f"Unexpected color type at index {index}: {type(color)}. Skipping this color.")
 
@@ -130,33 +130,42 @@ def get_palette_colors(palette_name):
     return colors
 
 def gimp_palette_to_palette_data(palette_name):
-    """Converts a GIMP palette to our PaletteData model."""
+    """Converts a GIMP palette to our PaletteData model with maximum precision."""
     try:
-        # Retrieve the palette by name
         palette = Gimp.Palette.get_by_name(palette_name)
         
         if not palette:
             Gimp.message(f"Palette '{palette_name}' not found.")
             return None
 
-        # Retrieve all colors in the palette
         gimp_colors = palette.get_colors()
         
         if not gimp_colors:
             Gimp.message(f"No colors found in palette '{palette_name}'.")
             return None
             
-        # Convert colors to our model
         colors = []
         for i, color in enumerate(gimp_colors):
             if isinstance(color, Gegl.Color):
-                color_data = PaletteProcessor.convert_gegl_to_color_data(
-                    color, 
-                    name=f"Color {i+1}"
+                # Get raw RGBA values at full precision
+                rgba = color.get_rgba()
+                color_data = ColorData(
+                    name=f"Color {i+1}",
+                    rgb={
+                        "r": rgba[0],  # Keep full float precision
+                        "g": rgba[1],
+                        "b": rgba[2]
+                    },
+                    alpha=rgba[3],  # Preserve alpha channel
+                    # Generate hex with maximum precision
+                    hex_value="#{:02x}{:02x}{:02x}".format(
+                        round(rgba[0] * 255),
+                        round(rgba[1] * 255),
+                        round(rgba[2] * 255)
+                    )
                 )
                 colors.append(color_data)
         
-        # Create and return PaletteData object
         return PaletteData(
             name=palette_name,
             colors=colors,
