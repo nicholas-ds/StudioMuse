@@ -45,7 +45,6 @@
         </child>
         <child>
           <object class="GtkBox" id="proportiaControlsBox">
-            <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="margin-start">5</property>
             <property name="margin-end">5</property>
@@ -121,7 +120,6 @@
                 <property name="spacing">10</property>
                 <child>
                   <object class="GtkLabel">
-                    <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="label">📏 Add New Measurement</property>
                     <attributes>
@@ -137,7 +135,6 @@
                 </child>
                 <child>
                   <object class="GtkComboBoxText" id="unitDropdown">
-                    <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <items>
                       <item>cm</item>
@@ -153,8 +150,7 @@
                 </child>
                 <child>
                   <object class="GtkEntry" id="measurementValueEntry">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
+                    <property name="can-focus">False</property>
                     <property name="placeholder-text">Value (e.g. 5.5)</property>
                   </object>
                   <packing>
@@ -166,9 +162,8 @@
                 <child>
                   <object class="GtkButton" id="addMeasurementButton">
                     <property name="label">➕  Calculate Measurement</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="receives-default">False</property>
                     <style>
                       <class name="suggested-action"/>
                     </style>
@@ -181,7 +176,6 @@
                 </child>
                 <child>
                   <object class="GtkSeparator">
-                    <property name="visible">True</property>
                     <property name="can-focus">False</property>
                   </object>
                   <packing>
@@ -191,7 +185,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox" id="saveNewDimension_main">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="margin-start">5</property>
@@ -200,7 +194,6 @@
                     <property name="spacing">10</property>
                     <child>
                       <object class="GtkLabel">
-                        <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="label">Save New Dimension</property>
                         <attributes>
@@ -216,7 +209,6 @@
                     </child>
                     <child>
                       <object class="GtkEntry" id="generatedDimension">
-                        <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="editable">False</property>
                         <property name="placeholder-text">Scaled Measurement</property>
@@ -229,8 +221,7 @@
                     </child>
                     <child>
                       <object class="GtkEntry" id="measurementNameEntry">
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
+                        <property name="can-focus">False</property>
                         <property name="placeholder-text">Dimension Name</property>
                       </object>
                       <packing>
@@ -241,7 +232,6 @@
                     </child>
                     <child>
                       <object class="GtkComboBoxText" id="groupDropdownSidebar">
-                        <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <items>
                           <item>-- Select Group --</item>
@@ -256,7 +246,6 @@
                     </child>
                     <child>
                       <object class="GtkEntry" id="newGroupName">
-                        <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="placeholder-text">New Group Name</property>
                       </object>
@@ -264,22 +253,6 @@
                         <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="position">5</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="saveDimensionButton">
-                        <property name="label">💾 Save Dimension</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">True</property>
-                        <style>
-                          <class name="suggested-action"/>
-                        </style>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">6</property>
                       </packing>
                     </child>
                   </object>
@@ -322,7 +295,92 @@
                         <property name="vexpand">True</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
-                        <!-- This container will be populated dynamically with measurement groups -->
+                        <child>
+                          <object class="GtkExpander">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <child>
+                              <object class="GtkListBox">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">True</property>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="spacing">6</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="label" translatable="yes">Hairline to Chin: </property>
+                                            <attributes>
+                                              <attribute name="weight" value="ultraheavy"/>
+                                            </attributes>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkTextView">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">True</property>
+                                            <property name="editable">False</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="editMeasurementButton1">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="receives-default">False</property>
+                                            <property name="tooltip-text">Edit measurement</property>
+                                            <property name="relief">none</property>
+                                            <child>
+                                              <object class="GtkImage">
+                                                <property name="can-focus">False</property>
+                                                <property name="icon-name">document-edit-symbolic</property>
+                                              </object>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="label">
+                              <object class="GtkLabel">
+                                <property name="can-focus">False</property>
+                                <property name="label">Group: Face</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
                       </object>
                     </child>
                   </object>
