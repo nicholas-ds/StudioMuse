@@ -61,8 +61,10 @@ class WindowManager:
             
             for category_id, display_name in notebook_categories.items():
                 try:
+                    Gimp.message(f"Loading notebook: {category_id}")
                     notebook_builder = self.ui_loader.load_notebook(category_id)
                     if notebook_builder:
+                        Gimp.message(f"Successfully loaded builder for {category_id}")
                         notebook = notebook_builder.get_object(f"{category_id}Notebook")
                         if notebook:
                             self.main_stack.add_titled(notebook, category_id, display_name)
@@ -70,23 +72,52 @@ class WindowManager:
                             
                             # Connect signals based on category
                             if category_id == "analysis":
+                                Gimp.message("Connecting analysis signals")
                                 color_bit_magic = ColorBitMagic()
                                 color_bit_magic.set_builder(notebook_builder)
                                 self.tool_handlers["analysis"] = color_bit_magic
                                 notebook_builder.connect_signals(color_bit_magic)
+                            elif category_id == "structure":
+                                Gimp.message("Attempting to connect structure signals")
+                                try:
+                                    # Try direct import first
+                                    Gimp.message("Trying direct import of ProportiaUI")
+                                    from tools.structure.proportia import ProportiaUI
+                                    Gimp.message("Import successful")
+                                    proportia_ui = ProportiaUI(notebook_builder)
+                                    self.tool_handlers["structure"] = proportia_ui
+                                    notebook_builder.connect_signals(proportia_ui)
+                                    Gimp.message("Successfully connected proportia signals")
+                                except ImportError as ie:
+                                    # Log the specific import error
+                                    error_msg = f"Import error details: {str(ie)}"
+                                    Gimp.message(error_msg)
+                                    print(error_msg)
+                                    
+                                    # Fall back to connecting signals to self
+                                    Gimp.message("Falling back to default signal handling for structure")
+                                    notebook_builder.connect_signals(self)
                             else:
                                 notebook_builder.connect_signals(self)
                                 
                         else:
-                            Gimp.message(f"Could not find notebook object for {category_id}")
+                            error_msg = f"Could not find notebook object for {category_id}"
+                            Gimp.message(error_msg)
+                            print(error_msg)
                         
                 except Exception as e:
-                    Gimp.message(f"Error loading {category_id} notebook: {e}")
-                    print(f"Error loading {category_id} notebook: {e}")
+                    import traceback
+                    tb = traceback.format_exc()
+                    error_msg = f"Error loading {category_id} notebook: {str(e)}\n{tb}"
+                    Gimp.message(error_msg)
+                    print(error_msg)
                     
         except Exception as e:
-            Gimp.message(f"Error in load_notebooks: {e}")
-            print(f"Error in load_notebooks: {e}")
+            import traceback
+            tb = traceback.format_exc()
+            error_msg = f"Error in load_notebooks: {str(e)}\n{tb}"
+            Gimp.message(error_msg)
+            print(error_msg)
 
     def on_main_window_destroy(self, widget):
         """Handle proper cleanup when window is destroyed"""
