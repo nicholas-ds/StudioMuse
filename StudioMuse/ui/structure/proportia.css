@@ -1,0 +1,279 @@
+/* Proportia Tool Styling */
+
+/* Main application styles */
+#structureNotebook {
+    background-color: #333333;
+}
+
+/* Main title */
+.proportia-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #e0e0e0;
+    margin-bottom: 12px;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Control bar and buttons */
+#proportiaControlsBox {
+    background-color: #2b2b2b;
+    border: 1px solid #444;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+button.control-button {
+    background-image: linear-gradient(to bottom, #4a4a4a, #333333);
+    color: white;
+    border-radius: 6px;
+    padding: 8px 12px;
+    border: 1px solid #555;
+}
+
+button.control-button:hover {
+    background-image: linear-gradient(to bottom, #555555, #3a3a3a);
+}
+
+/* Action buttons */
+button.suggested-action {
+    background-image: linear-gradient(to bottom, #4CAF50, #388E3C);
+    color: white;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: bold;
+    border: 1px solid #2d6e30;
+}
+
+button.suggested-action:hover {
+    background-image: linear-gradient(to bottom, #5cb860, #409444);
+}
+
+/* Framed sections for measurements */
+.measurement-frame {
+    background-color: #3a3a3a;
+    border: 1px solid #505050;
+    border-radius: 6px;
+    padding: 5px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.frame-title {
+    font-weight: bold;
+    color: #e0e0e0;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #555;
+}
+
+/* Result display styling */
+.result-display {
+    background-color: rgba(76, 175, 80, 0.15);
+    color: #a5d6a7; /* Light green text for dark bg */
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    margin: 8px 0;
+}
+
+/* Group headers in the measurements list */
+.group-header {
+    font-weight: bold;
+    padding: 8px;
+    background-image: linear-gradient(to bottom, #444444, #333333);
+    border-radius: 6px 6px 0 0;
+    border: 1px solid #555;
+    margin-bottom: 0;
+    color: #e0e0e0;
+}
+
+/* Group content area */
+.group-content {
+    background-color: #333333;
+    border: 1px solid #555;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 8px;
+    margin-bottom: 12px;
+}
+
+/* Measurement items in the grouped list */
+.measurement-item {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #383838;
+}
+
+.measurement-item:hover {
+    background-color: rgba(76, 175, 80, 0.15);
+}
+
+.measurement-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 6px 6px;
+}
+
+/* Measurement name and value styling */
+.measurement-name {
+    font-weight: normal;
+    color: #d0d0d0;
+}
+
+.measurement-value {
+    font-weight: bold;
+    color: #a5d6a7; /* Light green for dark bg */
+}
+
+/* Entry fields */
+entry {
+    border-radius: 5px;
+    padding: 8px;
+    border: 1px solid #555;
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+}
+
+entry:focus {
+    border-color: #4CAF50;
+}
+
+/* New group entry styling */
+.new-group-entry {
+    margin-top: 8px;
+    border-color: #4CAF50;
+}
+
+/* Left pane content styling */
+#measurementSidebarBox {
+    background-color: #333333;
+    border-right: 1px solid #505050;
+    padding: 10px;
+}
+
+/* Dropdown styling */
+combobox button {
+    border-radius: 5px;
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+combobox button:hover {
+    background-color: #3a3a3a;
+}
+
+/* Scrolled window styling */
+scrolledwindow {
+    border: none;
+}
+
+viewport {
+    background-color: #333333;
+}
+
+/* Sidebar panel */
+.sidebar-panel {
+    background-color: #f5f5f5;
+    border-right: 1px solid alpha(#999, 0.2);
+    padding: 12px;
+}
+
+/* Section headers in sidebar */
+.section-header {
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+/* Action buttons - maintain GIMP styling but add slight enhancements */
+.action-button {
+    border-radius: 4px;
+}
+
+/* Additional styles for GIMP dark theme integration */
+
+/* Ensure notebook tabs match the theme */
+notebook tab {
+    background-color: #333333;
+    color: #d0d0d0;
+    border-color: #505050;
+}
+
+notebook tab:checked {
+    background-color: #404040;
+}
+
+/* Style scrollbars to match dark theme */
+scrollbar {
+    background-color: #333333;
+    border: none;
+}
+
+scrollbar slider {
+    background-color: #505050;
+    border-radius: 6px;
+    min-width: 8px;
+    min-height: 8px;
+}
+
+scrollbar slider:hover {
+    background-color: #606060;
+}
+
+/* Style GtkBox containers to avoid white borders */
+box {
+    background-color: transparent;
+}
+
+/* Fix for frame headers */
+frame > border {
+    border-width: 0px;
+}
+
+/* Make sure frame background is consistent */
+.measurement-frame > box {
+    background-color: #3a3a3a;
+}
+
+/* Ensure tooltips match theme */
+tooltip {
+    background-color: #505050;
+    color: #e0e0e0;
+    border: 1px solid #666;
+}
+
+/* Style buttons inside the measurement area */
+.measurement-item button {
+    background: none;
+    border: none;
+    color: #a0a0a0;
+}
+
+.measurement-item button:hover {
+    color: #e0e0e0;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Focus styles for entries */
+entry:focus {
+    background-color: #2f2f2f;
+}
+
+/* Dropdown popup styling */
+menu {
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+}
+
+menuitem {
+    padding: 5px;
+}
+
+menuitem:hover {
+    background-color: #4CAF50;
+    color: white;
+} 
