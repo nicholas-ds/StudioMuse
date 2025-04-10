@@ -38,6 +38,9 @@ from core.utils.ui import (
     cleanup_resources
 )
 
+# Import measurement models
+from core.models.measurement_models import Measurement, MeasurementCollection
+
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
     
@@ -102,21 +105,17 @@ class ProportiaUI:
         
         # IMPORTANT: Force visibility even if XML failed
         self.widgets["newGroupName"].set_visible(False)
-        self.widgets["newGroupName"].hide()  # Use both methods for safety
+        self.widgets["newGroupName"].hide()
         
         # Store current measurements for easier access and updates
         self.current_measurements = []
         
-        # Schedule a verification check after UI is fully rendered
+        # Schedule initialization tasks
         GLib.idle_add(self.verify_entry_visibility)
-        
-        # Load and display saved measurements
         GLib.idle_add(self.load_and_display_measurements)
-        
-        # Populate group dropdown with existing groups
         GLib.idle_add(self.populate_group_dropdown)
         
-        # Connect signals with our shared utility
+        # Connect signals using shared utility
         custom_handlers = {
             "addMeasurementButton": [("clicked", self.on_calculate_clicked)],
             "measurementValueEntry": [("activate", self.on_calculate_clicked)],
@@ -171,11 +170,8 @@ class ProportiaUI:
 
     def get_measurements_file_path(self) -> str:
         """Get the path to the measurements file"""
-        # Use direct path based on the known location
-        file_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),  # Up to studioMuse root
-            "data", "tools", "structure", "saved_dimensions.json"
-        )
+        # Match the actual installed path structure
+        file_path = get_plugin_storage_path("data/tools/structure/saved_dimensions.json", "studiomuse")
         
         # Add debugging output
         logger.info(f"Measurements file path: {file_path}")
@@ -193,8 +189,8 @@ class ProportiaUI:
             while len(model) > 2:
                 model.remove(len(model) - 1)  # Remove the last item
         
-        # Get groups from current measurements
-        groups = get_unique_groups(self.current_measurements)
+        # Get groups directly from the collection
+        groups = self.collection.get_groups()
         
         # Add groups to dropdown
         for group in groups:
@@ -210,10 +206,13 @@ class ProportiaUI:
         for child in self.widgets["measurementGroupBox"].get_children():
             self.widgets["measurementGroupBox"].remove(child)
         
-        # Load measurements using the new file_io utilities
+        # Load measurements using the file_io utilities and convert to MeasurementCollection
         file_path = self.get_measurements_file_path()
         raw_data = load_json_data(file_path, default=[])
-        self.current_measurements = normalize_measurement_data(raw_data)
+        
+        # Convert to structured model
+        self.collection = MeasurementCollection.from_dict(raw_data)
+        self.current_measurements = self.collection.measurements
         
         if not self.current_measurements:
             # Display message when no measurements are found
@@ -224,8 +223,10 @@ class ProportiaUI:
             self.widgets["measurementGroupBox"].add(label)
             return
         
-        # Group measurements using the utility function
-        grouped_measurements = group_measurements(self.current_measurements)
+        # Get grouped measurements using the collection's method
+        grouped_measurements = {}
+        for group in self.collection.get_groups():
+            grouped_measurements[group] = self.collection.get_measurements_by_group(group)
         
         # Display each group
         for group_name, items in grouped_measurements.items():
@@ -260,22 +261,28 @@ class ProportiaUI:
         
         # Get the group
         group = self.get_selected_group()
+        unit = self.get_selected_unit()
         
-        # Create the new measurement
-        new_measurement = {
-            'name': name,
-            'value': value,
-            'group': group,
-            'unit': self.get_selected_unit()
-        }
+        # Create the new measurement using the Measurement model
+        new_measurement = Measurement(
+            name=name,
+            value=value,
+            group=group,
+            unit=unit
+        )
         
-        # Add to current measurements
-        self.current_measurements.append(new_measurement)
+        # Initialize collection if it doesn't exist
+        if not hasattr(self, 'collection'):
+            self.collection = MeasurementCollection(name="Proportia Measurements")
+            self.current_measurements = self.collection.measurements
         
-        # Save to file using the new file_io utility
+        # Add to collection
+        self.collection.add_measurement(new_measurement)
+        
+        # Save to file
         file_path = self.get_measurements_file_path()
-        if save_json_data(self.current_measurements, file_path, indent=2):
-            # Show success message using shared utility
+        if save_json_data(self.collection.to_dict(), file_path, indent=2):
+            # Show success message
             show_message(f"Measurement '{name}' saved successfully", Gtk.MessageType.INFO)
             
             # Clear input fields
@@ -370,7 +377,7 @@ class ProportiaUI:
         expanded = expander.get_expanded()
         expander.set_expanded(not expanded)
     
-    def create_measurement_item_ui(self, measurement: Dict[str, Any]) -> Gtk.Box:
+    def create_measurement_item_ui(self, measurement: Measurement) -> Gtk.Box:
         """Create UI for a single measurement item with improved styling"""
         item_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         item_box.set_margin_top(0)
@@ -378,27 +385,26 @@ class ProportiaUI:
         apply_css_class(item_box, "measurement-item")
         
         # Add name with styling
-        name_label = Gtk.Label(label=measurement['name'])
+        name_label = Gtk.Label(label=measurement.name)
         name_label.set_halign(Gtk.Align.START)
         name_label.set_hexpand(True)
         apply_css_class(name_label, "measurement-name")
         item_box.pack_start(name_label, True, True, 5)
         
         # Add value with unit and styling
-        unit = measurement.get('unit', 'cm')
-        value_text = f"{measurement['value']:.2f} {unit}"
+        value_text = f"{measurement.value:.2f} {measurement.unit}"
         value_label = Gtk.Label(label=value_text)
         value_label.set_halign(Gtk.Align.END)
         apply_css_class(value_label, "measurement-value")
         
-        # Create a button box for the actions with minimal spacing
+        # Create button box for the actions
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         button_box.set_spacing(2)
         
         # Add edit button with tooltip
         edit_button = Gtk.Button()
         edit_button.set_relief(Gtk.ReliefStyle.NONE)
-        edit_button.set_tooltip_text(f"Edit {measurement['name']}")
+        edit_button.set_tooltip_text(f"Edit {measurement.name}")
         edit_icon = Gtk.Image.new_from_icon_name("document-edit-symbolic", Gtk.IconSize.SMALL_TOOLBAR)
         edit_button.add(edit_icon)
         edit_button.connect("clicked", self.on_edit_measurement, measurement)
@@ -406,7 +412,7 @@ class ProportiaUI:
         # Add delete button with tooltip
         delete_button = Gtk.Button()
         delete_button.set_relief(Gtk.ReliefStyle.NONE)
-        delete_button.set_tooltip_text(f"Delete {measurement['name']}")
+        delete_button.set_tooltip_text(f"Delete {measurement.name}")
         delete_icon = Gtk.Image.new_from_icon_name("edit-delete-symbolic", Gtk.IconSize.SMALL_TOOLBAR)
         delete_button.add(delete_icon)
         delete_button.connect("clicked", self.on_delete_measurement, measurement)
@@ -425,32 +431,33 @@ class ProportiaUI:
         """Handle edit button click"""
         # This would open a dialog to edit the measurement
         # For now, just log it
-        logger.info(f"Editing measurement: {measurement['name']}")
+        logger.info(f"Editing measurement: {measurement.name}")
         
         # Future implementation would have a dialog here
     
     def on_delete_measurement(self, button, measurement):
         """Handle delete button click"""
-        # Use the shared show_message utility instead of creating a custom dialog
         dialog = Gtk.MessageDialog(
             transient_for=None,
             flags=0,
             message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.YES_NO,
-            text=f"Delete measurement '{measurement['name']}'?"
+            text=f"Delete measurement '{measurement.name}'?"
         )
         response = dialog.run()
         dialog.destroy()
         
         if response == Gtk.ResponseType.YES:
-            for i, m in enumerate(self.current_measurements):
-                if m.get('name') == measurement['name'] and m.get('value') == measurement['value']:
-                    del self.current_measurements[i]
-                    break
+            # Remove from current measurements list
+            self.current_measurements = [m for m in self.current_measurements 
+                                         if not (m.name == measurement.name and m.value == measurement.value)]
             
+            # Update the collection directly
+            self.collection.measurements = self.current_measurements
+            
+            # Save to file
             file_path = self.get_measurements_file_path()
-            # Update to use the new file_io utility
-            if save_json_data(self.current_measurements, file_path, indent=2):
+            if save_json_data(self.collection.to_dict(), file_path, indent=2):
                 self.load_and_display_measurements()
                 self.populate_group_dropdown()
             else:
