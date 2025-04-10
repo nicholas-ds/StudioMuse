@@ -23,7 +23,15 @@ from core.utils.tools.structure.structure_utilities import (
     apply_css_class
 )
 
-from core.utils.ui import connect_signals  # Add this import
+# Import shared UI utilities
+from core.utils.ui import (
+    connect_signals,
+    collect_widgets,
+    get_widget_value,
+    show_message,
+    populate_dropdown,
+    cleanup_resources
+)
 
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
@@ -69,28 +77,27 @@ class ProportiaUI:
         self.calculator = ProportiaCalculator()
         self.builder = builder
         
-        # Get relevant widgets
-        self.unit_dropdown = self.builder.get_object("unitDropdown")
-        self.measurement_input = self.builder.get_object("measurementValueEntry")
-        self.calculate_button = self.builder.get_object("addMeasurementButton")
-        self.result_display = self.builder.get_object("generatedDimension")
-        self.measurement_name_entry = self.builder.get_object("measurementNameEntry")
-        self.save_dimension_button = self.builder.get_object("saveDimensionButton")
+        # Use collect_widgets to get all UI elements
+        widget_ids = [
+            "unitDropdown",
+            "measurementValueEntry",
+            "addMeasurementButton",
+            "generatedDimension",
+            "measurementNameEntry",
+            "saveDimensionButton",
+            "groupDropdownSidebar",
+            "newGroupName",
+            "measurementGroupBox"
+        ]
+        self.widgets = collect_widgets(builder, widget_ids)
         
         # Set default unit
-        if self.unit_dropdown.get_active() == -1:
-            self.unit_dropdown.set_active(0)
-        
-        # Get widgets
-        self.group_dropdown = builder.get_object("groupDropdownSidebar")
-        self.new_group_entry = builder.get_object("newGroupName")
-        
-        # Measurement display box (renamed from measurementGroupBox in XML)
-        self.measurement_group_box = builder.get_object("measurementGroupBox")
+        if self.widgets["unitDropdown"].get_active() == -1:
+            self.widgets["unitDropdown"].set_active(0)
         
         # IMPORTANT: Force visibility even if XML failed
-        self.new_group_entry.set_visible(False)
-        self.new_group_entry.hide()  # Use both methods for safety
+        self.widgets["newGroupName"].set_visible(False)
+        self.widgets["newGroupName"].hide()  # Use both methods for safety
         
         # Store current measurements for easier access and updates
         self.current_measurements = []
@@ -104,7 +111,7 @@ class ProportiaUI:
         # Populate group dropdown with existing groups
         GLib.idle_add(self.populate_group_dropdown)
         
-        # With this more structured approach:
+        # Connect signals with our shared utility
         custom_handlers = {
             "addMeasurementButton": [("clicked", self.on_calculate_clicked)],
             "measurementValueEntry": [("activate", self.on_calculate_clicked)],
@@ -117,38 +124,35 @@ class ProportiaUI:
         """Force verify the entry visibility after UI is loaded"""
         print("Verifying entry visibility...")
         # Double-check that entry is hidden
-        self.new_group_entry.set_visible(False)
-        self.new_group_entry.hide()
+        self.widgets["newGroupName"].set_visible(False)
+        self.widgets["newGroupName"].hide()
         return False  # Don't repeat
     
     def on_group_dropdown_changed(self, combo):
         """Handle dropdown changes"""
-        selected = combo.get_active_text()
+        selected = get_widget_value(combo)
         print(f"Dropdown changed to: '{selected}'")
         
         if selected == "+ New Group":
-            self.new_group_entry.set_visible(True)
-            self.new_group_entry.show()
+            self.widgets["newGroupName"].set_visible(True)
+            self.widgets["newGroupName"].show()
         else:
-            self.new_group_entry.set_visible(False)
-            self.new_group_entry.hide()
+            self.widgets["newGroupName"].set_visible(False)
+            self.widgets["newGroupName"].hide()
     
     def get_selected_unit(self) -> str:
         """Get the selected unit from dropdown"""
-        active_index = self.unit_dropdown.get_active()
-        if active_index != -1:
-            return self.unit_dropdown.get_model()[active_index][0]
-        return "cm"  # Default fallback
+        return get_widget_value(self.widgets["unitDropdown"]) or "cm"
         
     def on_calculate_clicked(self, widget):
         """Handle calculation button click or Enter key"""
-        # Get input value
-        input_value = self.measurement_input.get_text().strip()
+        # Get input value using shared utility
+        input_value = get_widget_value(self.widgets["measurementValueEntry"])
         
         # Basic validation
         if not input_value:
-            self.result_display.set_text("Enter a value first")
-            self.measurement_input.grab_focus()
+            self.widgets["generatedDimension"].set_text("Enter a value first")
+            self.widgets["measurementValueEntry"].grab_focus()
             return
             
         # Get selected unit
@@ -158,12 +162,10 @@ class ProportiaUI:
         _, formatted_result = self.calculator.calculate_scaled_measurement(input_value, unit)
         
         # Display result
-        self.result_display.set_text(formatted_result)
+        self.widgets["generatedDimension"].set_text(formatted_result)
 
     def get_measurements_file_path(self) -> str:
         """Get the path to the measurements file"""
-        # For testing, use the saved_dimensions.json from the example
-        # In production, this would use a path from Gimp.directory()
         return os.path.join(
             os.path.dirname(__file__), 
             "..", "..", "docs", 
@@ -173,8 +175,10 @@ class ProportiaUI:
     
     def populate_group_dropdown(self):
         """Populate the group dropdown with existing groups"""
+        dropdown = self.widgets["groupDropdownSidebar"]
+        
         # Clear current items except the first two (default and + New Group)
-        model = self.group_dropdown.get_model()
+        model = dropdown.get_model()
         if model is not None:
             while len(model) > 2:
                 model.remove(len(model) - 1)  # Remove the last item
@@ -184,17 +188,17 @@ class ProportiaUI:
         
         # Add groups to dropdown
         for group in groups:
-            self.group_dropdown.append_text(group)
+            dropdown.append_text(group)
         
         # Set active item to the first one
-        if self.group_dropdown.get_active() == -1:
-            self.group_dropdown.set_active(0)
+        if dropdown.get_active() == -1:
+            dropdown.set_active(0)
     
     def load_and_display_measurements(self) -> None:
         """Load measurements from JSON file and display them in the UI"""
         # Clear existing content
-        for child in self.measurement_group_box.get_children():
-            self.measurement_group_box.remove(child)
+        for child in self.widgets["measurementGroupBox"].get_children():
+            self.widgets["measurementGroupBox"].remove(child)
         
         # Load measurements using the utility function
         file_path = self.get_measurements_file_path()
@@ -206,7 +210,7 @@ class ProportiaUI:
             label.set_halign(Gtk.Align.START)
             label.set_margin_top(10)
             label.show()
-            self.measurement_group_box.add(label)
+            self.widgets["measurementGroupBox"].add(label)
             return
         
         # Group measurements using the utility function
@@ -217,30 +221,30 @@ class ProportiaUI:
             self.create_group_ui(group_name, items)
         
         # Show all widgets
-        self.measurement_group_box.show_all()
+        self.widgets["measurementGroupBox"].show_all()
     
     def on_save_dimension_clicked(self, button):
         """Handle save dimension button click"""
-        # Get the dimension name and value
-        name = self.measurement_name_entry.get_text().strip()
-        value_text = self.result_display.get_text().strip()
+        # Get the dimension name and value using shared utility
+        name = get_widget_value(self.widgets["measurementNameEntry"])
+        value_text = get_widget_value(self.widgets["generatedDimension"])
         
         # Validate inputs
         if not name:
-            self.show_message_dialog("Please enter a dimension name", Gtk.MessageType.WARNING)
-            self.measurement_name_entry.grab_focus()
+            show_message("Please enter a dimension name", Gtk.MessageType.WARNING)
+            self.widgets["measurementNameEntry"].grab_focus()
             return
         
         if not value_text:
-            self.show_message_dialog("Please calculate a measurement first", Gtk.MessageType.WARNING)
-            self.measurement_input.grab_focus()
+            show_message("Please calculate a measurement first", Gtk.MessageType.WARNING)
+            self.widgets["measurementValueEntry"].grab_focus()
             return
         
         # Parse the value (format is like "10.50 cm")
         try:
             value = float(value_text.split()[0])
         except (ValueError, IndexError):
-            self.show_message_dialog("Invalid measurement value", Gtk.MessageType.ERROR)
+            show_message("Invalid measurement value", Gtk.MessageType.ERROR)
             return
         
         # Get the group
@@ -260,27 +264,27 @@ class ProportiaUI:
         # Save to file
         file_path = self.get_measurements_file_path()
         if save_data_to_json(self.current_measurements, file_path):
-            # Show success message
-            self.show_message_dialog(f"Measurement '{name}' saved successfully", Gtk.MessageType.INFO)
+            # Show success message using shared utility
+            show_message(f"Measurement '{name}' saved successfully", Gtk.MessageType.INFO)
             
             # Clear input fields
-            self.measurement_name_entry.set_text("")
-            self.measurement_input.set_text("")
-            self.result_display.set_text("")
+            self.widgets["measurementNameEntry"].set_text("")
+            self.widgets["measurementValueEntry"].set_text("")
+            self.widgets["generatedDimension"].set_text("")
             
             # Refresh the display
             self.load_and_display_measurements()
             self.populate_group_dropdown()
         else:
-            self.show_message_dialog("Failed to save measurement", Gtk.MessageType.ERROR)
+            show_message("Failed to save measurement", Gtk.MessageType.ERROR)
     
     def get_selected_group(self) -> str:
         """Get the selected group or create a new one"""
-        selected = self.group_dropdown.get_active_text()
+        selected = get_widget_value(self.widgets["groupDropdownSidebar"])
         
         if selected == "+ New Group":
             # Get text from new group entry
-            new_group = self.new_group_entry.get_text().strip()
+            new_group = get_widget_value(self.widgets["newGroupName"])
             if new_group:
                 return new_group
             else:
@@ -289,18 +293,6 @@ class ProportiaUI:
             return selected
         else:
             return "Default"
-    
-    def show_message_dialog(self, message: str, message_type: Gtk.MessageType = Gtk.MessageType.INFO):
-        """Show a message dialog with the given message"""
-        dialog = Gtk.MessageDialog(
-            transient_for=None,
-            flags=0,
-            message_type=message_type,
-            buttons=Gtk.ButtonsType.OK,
-            text=message
-        )
-        dialog.run()
-        dialog.destroy()
     
     def create_group_ui(self, group_name: str, measurements: List[Dict[str, Any]]) -> None:
         """Create UI elements for a measurement group with improved styling"""
@@ -360,7 +352,7 @@ class ProportiaUI:
             content_box.add(measurement_box)
         
         # Add group to main container
-        self.measurement_group_box.add(group_container)
+        self.widgets["measurementGroupBox"].add(group_container)
     
     def on_group_header_clicked(self, button, expander):
         """Toggle the expander when the header is clicked"""
@@ -428,6 +420,7 @@ class ProportiaUI:
     
     def on_delete_measurement(self, button, measurement):
         """Handle delete button click"""
+        # Use the shared show_message utility instead of creating a custom dialog
         dialog = Gtk.MessageDialog(
             transient_for=None,
             flags=0,
@@ -449,12 +442,10 @@ class ProportiaUI:
                 self.load_and_display_measurements()
                 self.populate_group_dropdown()
             else:
-                self.show_message_dialog("Failed to save changes", Gtk.MessageType.ERROR)
+                show_message("Failed to save changes", Gtk.MessageType.ERROR)
 
     def cleanup(self):
         """Clean up resources when the plugin is unloaded"""
-        # Clear references to prevent memory leaks
-        self.current_measurements = []
-        # Remove any active signal connections if needed
-        # This ensures proper resource cleanup when window manager calls it
+        # Use shared cleanup utility
+        cleanup_resources(self)
         logger.info("ProportiaUI resources cleaned up")

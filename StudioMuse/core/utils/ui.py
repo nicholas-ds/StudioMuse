@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-from gi.repository import Gtk, Gimp
+from gi.repository import Gtk, Gimp, Gdk
 
 class UILoader:
     """Handles UI loading operations following the modular XML plan"""
@@ -55,3 +55,127 @@ def connect_signals(builder, handler_object, custom_handlers=None):
             if widget:
                 for signal_name, handler in handlers:
                     widget.connect(signal_name, handler) 
+
+def collect_widgets(builder, widget_ids):
+    """
+    Collect widgets by ID into a dictionary.
+    
+    Args:
+        builder: Gtk.Builder instance
+        widget_ids: List of widget IDs to collect
+        
+    Returns:
+        Dictionary mapping widget IDs to their objects
+    """
+    widgets = {}
+    for widget_id in widget_ids:
+        widgets[widget_id] = builder.get_object(widget_id)
+    return widgets 
+
+def load_css(css_path):
+    """
+    Load CSS from specified path and apply to application.
+    
+    Args:
+        css_path: Path to the CSS file
+        
+    Returns:
+        True if CSS was loaded successfully, False otherwise
+    """
+    try:
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_path(css_path)
+        
+        screen = Gdk.Screen.get_default()
+        style_context = Gtk.StyleContext()
+        style_context.add_provider_for_screen(
+            screen, 
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        return True
+    except Exception as e:
+        print(f"Error loading CSS: {e}")
+        return False 
+
+def get_widget_value(widget):
+    """
+    Extract value from various widget types.
+    
+    Args:
+        widget: Gtk widget to extract value from
+        
+    Returns:
+        Extracted value or None if widget type is not supported
+    """
+    if isinstance(widget, Gtk.ComboBoxText):
+        return widget.get_active_text()
+    elif isinstance(widget, Gtk.Entry):
+        return widget.get_text().strip()
+    elif isinstance(widget, Gtk.CheckButton):
+        return widget.get_active()
+    elif isinstance(widget, Gtk.Label):
+        return widget.get_text()
+    return None 
+
+def show_message(message, message_type=Gtk.MessageType.INFO):
+    """
+    Show a standard message dialog.
+    
+    Args:
+        message: Message to display
+        message_type: Type of message (INFO, WARNING, ERROR, etc.)
+    """
+    dialog = Gtk.MessageDialog(
+        transient_for=None,
+        flags=0,
+        message_type=message_type,
+        buttons=Gtk.ButtonsType.OK,
+        text=message
+    )
+    dialog.run()
+    dialog.destroy() 
+
+def populate_dropdown(dropdown, items, default_text=None):
+    """
+    Populate a dropdown with items.
+    
+    Args:
+        dropdown: Gtk.ComboBoxText instance
+        items: List of items (strings or objects with get_name method)
+        default_text: Optional text to add at beginning of dropdown
+    """
+    dropdown.remove_all()
+    
+    if default_text:
+        dropdown.append_text(default_text)
+        
+    for item in items:
+        text = item.get_name() if hasattr(item, 'get_name') else str(item)
+        dropdown.append_text(text)
+    
+    # Select first item
+    if dropdown.get_model() and len(dropdown.get_model()) > 0:
+        dropdown.set_active(0) 
+
+def cleanup_resources(instance):
+    """
+    Standard cleanup for UI resources.
+    
+    Args:
+        instance: Object instance to clean up
+    """
+    # Clear collections
+    for attr_name in dir(instance):
+        attr = getattr(instance, attr_name)
+        if isinstance(attr, (list, dict)) and not attr_name.startswith('__'):
+            if hasattr(attr, 'clear'):
+                attr.clear()
+    
+    # Mark as inactive if applicable
+    if hasattr(instance, 'is_active'):
+        instance.is_active = False
+    
+    # Clear builder reference
+    if hasattr(instance, 'builder'):
+        instance.builder = None 
