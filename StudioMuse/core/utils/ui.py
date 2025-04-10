@@ -179,3 +179,46 @@ def cleanup_resources(instance):
     # Clear builder reference
     if hasattr(instance, 'builder'):
         instance.builder = None 
+
+def load_css_for_plugin(css_path, fallback_css=None):
+    """
+    Load CSS styling for any plugin with fallback content creation.
+    
+    Args:
+        css_path: Path to the CSS file
+        fallback_css: Optional CSS content to create if file doesn't exist
+        
+    Returns:
+        bool: Success status
+    """
+    try:
+        # Check if CSS file exists
+        if not os.path.exists(css_path):
+            if fallback_css:
+                # Create directory if needed
+                os.makedirs(os.path.dirname(css_path), exist_ok=True)
+                
+                # Write fallback CSS
+                with open(css_path, 'w') as f:
+                    f.write(fallback_css)
+            else:
+                print(f"CSS file not found: {css_path}")
+                return False
+        
+        # Load the CSS provider
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_path(css_path)
+        
+        # Add to the default screen
+        screen = Gdk.Screen.get_default()
+        style_context = Gtk.StyleContext()
+        style_context.add_provider_for_screen(
+            screen, 
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        
+        return True
+    except Exception as e:
+        print(f"Error loading CSS: {e}")
+        return False 

@@ -16,7 +16,6 @@ from core.utils.tools.structure.structure_utilities import (
     scale_by_sqrt2, 
     group_measurements,
     get_unique_groups,
-    load_css_for_proportia,
     apply_css_class
 )
 
@@ -35,11 +34,15 @@ from core.utils.ui import (
     get_widget_value,
     show_message,
     populate_dropdown,
-    cleanup_resources
+    cleanup_resources,
+    load_css_for_plugin
 )
 
 # Import measurement models
 from core.models.measurement_models import Measurement, MeasurementCollection
+
+# Import validation utilities
+from core.utils.validation import validate_required_field, validate_numeric, validate_and_show_errors
 
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
@@ -78,8 +81,35 @@ class ProportiaUI:
     
     def __init__(self, builder):
         """Initialize UI with GTK builder"""
-        # Initialize CSS first, before creating widgets
-        css_loaded = load_css_for_proportia()
+        # Initialize CSS using the shared utility
+        css_path = os.path.join(os.path.dirname(__file__), "../../ui/structure/proportia.css")
+        
+        # Define fallback CSS in case the file doesn't exist
+        fallback_css = """
+        .group-header { 
+            background-color: #e0e0e0; 
+            padding: 8px; 
+            border-radius: 4px 4px 0 0;
+        }
+        .group-content { 
+            background-color: #f5f5f5; 
+            border-radius: 0 0 4px 4px;
+        }
+        .measurement-item { 
+            border-bottom: 1px solid #ddd; 
+            padding: 5px;
+        }
+        .measurement-name { font-weight: bold; }
+        .measurement-value { color: #333; }
+        .measurement-name-edit { 
+            background-color: #fff;
+            border: 1px solid #3584e4;
+            border-radius: 3px;
+            padding: 2px 5px;
+        }
+        """
+        
+        css_loaded = load_css_for_plugin(css_path, fallback_css)
         logger.info(f"CSS loading result: {css_loaded}")
         
         self.calculator = ProportiaCalculator()
@@ -237,26 +267,28 @@ class ProportiaUI:
     
     def on_save_dimension_clicked(self, button):
         """Handle save dimension button click"""
-        # Get the dimension name and value using shared utility
+        # Get values
         name = get_widget_value(self.widgets["measurementNameEntry"])
         value_text = get_widget_value(self.widgets["generatedDimension"])
         
-        # Validate inputs
-        if not name:
-            show_message("Please enter a dimension name", Gtk.MessageType.WARNING)
-            self.widgets["measurementNameEntry"].grab_focus()
+        # Validate inputs using the shared validation utilities
+        validations = [
+            validate_required_field(name, "Dimension name"),
+            validate_required_field(value_text, "Measurement value")
+        ]
+        
+        if not validate_and_show_errors(validations):
             return
         
-        if not value_text:
-            show_message("Please calculate a measurement first", Gtk.MessageType.WARNING)
-            self.widgets["measurementValueEntry"].grab_focus()
-            return
+        # Validate numeric value
+        is_valid, error_message, value = validate_numeric(
+            value_text.split()[0] if ' ' in value_text else value_text,
+            "Measurement value",
+            min_value=0
+        )
         
-        # Parse the value (format is like "10.50 cm")
-        try:
-            value = float(value_text.split()[0])
-        except (ValueError, IndexError):
-            show_message("Invalid measurement value", Gtk.MessageType.ERROR)
+        if not is_valid:
+            show_message(error_message, Gtk.MessageType.WARNING)
             return
         
         # Get the group
@@ -428,13 +460,85 @@ class ProportiaUI:
         return item_box
     
     def on_edit_measurement(self, button, measurement):
-        """Handle edit button click"""
-        # This would open a dialog to edit the measurement
-        # For now, just log it
-        logger.info(f"Editing measurement: {measurement.name}")
+        """Handle edit button click by enabling inline editing"""
+        # Find the parent item_box containing this measurement
+        item_box = button.get_parent().get_parent()
         
-        # Future implementation would have a dialog here
-    
+        # Get the name label (first child of the item_box)
+        name_label = item_box.get_children()[0]
+        
+        # Replace label with an entry for editing
+        entry = Gtk.Entry()
+        entry.set_text(measurement.name)
+        entry.set_has_frame(False)
+        apply_css_class(entry, "measurement-name-edit")
+        
+        # Replace the label with entry in the same position
+        item_box.remove(name_label)
+        item_box.pack_start(entry, True, True, 5)
+        item_box.reorder_child(entry, 0)  # Ensure it's the first child
+        
+        # Replace the edit button with a save button
+        button_box = button.get_parent()
+        button_box.remove(button)
+        
+        # Create save button
+        save_button = Gtk.Button()
+        save_button.set_relief(Gtk.ReliefStyle.NONE)
+        save_button.set_tooltip_text("Save changes")
+        save_icon = Gtk.Image.new_from_icon_name("document-save-symbolic", Gtk.IconSize.SMALL_TOOLBAR)
+        save_button.add(save_icon)
+        
+        # Add save handler
+        save_button.connect("clicked", self.on_save_edit, measurement, entry)
+        
+        # Add cancel button
+        cancel_button = Gtk.Button()
+        cancel_button.set_relief(Gtk.ReliefStyle.NONE)
+        cancel_button.set_tooltip_text("Cancel editing")
+        cancel_icon = Gtk.Image.new_from_icon_name("window-close-symbolic", Gtk.IconSize.SMALL_TOOLBAR)
+        cancel_button.add(cancel_icon)
+        cancel_button.connect("clicked", self.on_cancel_edit, measurement, item_box)
+        
+        # Add buttons to box
+        button_box.pack_start(save_button, False, False, 0)
+        button_box.pack_start(cancel_button, False, False, 0)
+        
+        # Show all new widgets
+        item_box.show_all()
+        
+        # Give focus to the entry
+        entry.grab_focus()
+        
+        # Connect Enter key to save
+        entry.connect("activate", self.on_save_edit, measurement, entry)
+
+    def on_save_edit(self, widget, measurement, entry):
+        """Save the edited measurement name"""
+        new_name = entry.get_text().strip()
+        
+        if new_name and new_name != measurement.name:
+            # Update the measurement name
+            old_name = measurement.name
+            measurement.name = new_name
+            
+            # Save the collection
+            file_path = self.get_measurements_file_path()
+            if save_json_data(self.collection.to_dict(), file_path, indent=2):
+                # Refresh display
+                self.load_and_display_measurements()
+                logger.info(f"Renamed measurement from '{old_name}' to '{new_name}'")
+            else:
+                show_message("Failed to save changes", Gtk.MessageType.ERROR)
+        else:
+            # Just refresh to revert the UI
+            self.load_and_display_measurements()
+
+    def on_cancel_edit(self, widget, measurement, item_box):
+        """Cancel editing and revert to normal view"""
+        # Just refresh the UI to its normal state
+        self.load_and_display_measurements()
+
     def on_delete_measurement(self, button, measurement):
         """Handle delete button click"""
         dialog = Gtk.MessageDialog(
