@@ -4,12 +4,23 @@
 from gi.repository import Gtk, Gimp
 from core.utils.api_client import api_client
 from core.utils.colorBitMagic_utils import (
-    save_json_to_file,
-    populate_palette_dropdown,
-    populate_physical_palette_dropdown,
-    load_physical_palette_data,
     get_palette_colors,
+    load_physical_palette_data,
     log_error
+)
+# Import new file I/O utilities
+from core.utils.file_io import (
+    get_plugin_storage_path,
+    save_json_data,
+    load_json_data
+)
+from core.utils.ui import (
+    connect_signals,
+    collect_widgets,
+    get_widget_value,
+    show_message,
+    populate_dropdown,
+    cleanup_resources
 )
 import json
 import os
@@ -37,7 +48,7 @@ class ColorBitMagic:
             builder (Gtk.Builder): The builder instance containing analysis UI elements
         """
         self.builder = builder
-        # Initialize widget references for both tabs
+        # Initialize widget references for both tabs using collect_widgets utility
         widget_ids = [
             # Demystify tab widgets
             'submitButton',
@@ -58,21 +69,29 @@ class ColorBitMagic:
             'closeButton'
         ]
         
-        for widget_id in widget_ids:
-            self.widgets[widget_id] = self.builder.get_object(widget_id)
+        self.widgets = collect_widgets(self.builder, widget_ids)
             
         # Initialize dropdowns
-        populate_palette_dropdown(self.builder)
-        populate_physical_palette_dropdown(self.builder)
+        self.populate_palette_dropdown()
+        self.populate_physical_palette_dropdown()
         
-        # Connect list box selection handler
-        if self.widgets['resultListBox']:
-            self.widgets['resultListBox'].connect('row-selected', self.on_color_selected)
+        # Connect signal handlers using shared utility
+        custom_handlers = {
+            'resultListBox': [('row-selected', self.on_color_selected)],
+            'submitButton': [('clicked', self.on_submit_clicked)],
+            'saveButton': [('clicked', self.on_save_clicked)],
+            'generateButton': [('clicked', self.on_generate_clicked)],
+            'closeButton': [('clicked', self.on_close_clicked)]
+        }
+        connect_signals(self.builder, self, custom_handlers)
 
     def log_message(self, message, level="info"):
         """Centralized logging function with active check"""
         if self.is_active:
-            Gimp.message(message)
+            if level == "error":
+                show_message(message, Gtk.MessageType.ERROR)
+            else:
+                Gimp.message(message)
 
     def format_palette_mapping(self, result):
         """
@@ -252,9 +271,9 @@ class ColorBitMagic:
         """Handle submission of palette comparison."""
         self.log_message("Submit button clicked. Loading selected palettes...")
         
-        # Get selected palettes from dropdowns
-        selected_palette = self.widgets['paletteDropdown'].get_active_text()
-        selected_physical_palette = self.widgets['physicalPaletteDropdown'].get_active_text()
+        # Get selected palettes from dropdowns using get_widget_value utility
+        selected_palette = get_widget_value(self.widgets['paletteDropdown'])
+        selected_physical_palette = get_widget_value(self.widgets['physicalPaletteDropdown'])
         
         if not selected_palette or not selected_physical_palette:
             self.log_message("Please select both a GIMP palette and a physical palette.")
@@ -316,14 +335,25 @@ class ColorBitMagic:
             
         return physical_color_names
 
+    def populate_palette_dropdown(self):
+        """Populates the GIMP palette dropdown using shared utility."""
+        palettes = Gimp.palettes_get_list("")
+        populate_dropdown(self.widgets['paletteDropdown'], palettes, "-- Select a palette --")
+
+    def populate_physical_palette_dropdown(self):
+        """Populates the physical palette dropdown using shared utility."""
+        from core.utils.colorBitMagic_utils import get_all_physical_palettes
+        physical_palettes = get_all_physical_palettes()
+        populate_dropdown(self.widgets['physicalPaletteDropdown'], physical_palettes, "-- Select a physical palette --")
+
     def on_add_physical_palette_clicked(self, button):
         """Handle adding a new physical palette."""
-        print("Add physical palette button clicked")
-        if self.widgets.get('paletteNameEntry'):
-            palette_name = self.widgets['paletteNameEntry'].get_text()
-            Gimp.message(f"Adding new palette: {palette_name}")
+        # Using get_widget_value utility
+        palette_name = get_widget_value(self.widgets['paletteNameEntry'])
+        if palette_name:
+            self.log_message(f"Adding new palette: {palette_name}")
         else:
-            Gimp.message("Error: Palette name entry not found")
+            self.log_message("Error: Please enter a palette name")
     
     def on_save_clicked(self, button):
         """Handle saving the current palette configuration."""
@@ -332,21 +362,23 @@ class ColorBitMagic:
             return
 
         try:
-            # Define the output directory for physical palettes
-            gimp_dir = Gimp.directory()
-            physical_palettes_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+            # Define the output directory for physical palettes using the centralized utility
+            physical_palettes_dir = get_plugin_storage_path("physical_palettes", "colorBitMagic")
             
-            # Save the palette data
-            filepath = save_json_to_file(
-                data=self.current_palette,
-                filename=self.current_palette["name"],
-                directory=physical_palettes_dir
-            )
+            # Ensure filename is valid
+            filename = f"{self.current_palette['name']}.json"
+            filepath = os.path.join(physical_palettes_dir, filename)
             
-            if filepath:
+            # Save the palette data using the centralized utility
+            if save_json_data(
+                self.current_palette,
+                filepath,
+                create_dirs=True,
+                indent=2
+            ):
                 self.log_message(f"Palette '{self.current_palette['name']}' saved successfully.")
                 # Refresh the physical palette dropdown
-                populate_physical_palette_dropdown(self.builder)
+                self.populate_physical_palette_dropdown()
                 # Switch back to first tab
                 notebook = self.builder.get_object("analysisNotebook")
                 if notebook:
@@ -360,11 +392,8 @@ class ColorBitMagic:
     
     def on_generate_clicked(self, button):
         """Handle generating palette from LLM."""
-        if not self.widgets.get('paletteNameEntry') or not self.widgets.get('resultsTextView'):
-            self.log_message("Required widgets not found")
-            return
-
-        entry_text = self.widgets['paletteNameEntry'].get_text()
+        # Use get_widget_value utility
+        entry_text = get_widget_value(self.widgets['paletteNameEntry'])
         if not entry_text:
             self.log_message("Please enter a palette description")
             return
@@ -373,9 +402,6 @@ class ColorBitMagic:
             # Call the backend API
             self.log_message(f"Sending request to API with text: {entry_text}")
             result = api_client.create_physical_palette(entry_text)
-            
-            # Debug log the raw response
-            self.log_message(f"Raw API response: {result}")
             
             if not result:
                 self.log_message("Error: Received empty response from API")
@@ -465,18 +491,5 @@ class ColorBitMagic:
 
     def cleanup(self):
         """Clean up resources when the tool is being closed"""
-        try:
-            # Clear any stored data
-            self.color_results.clear()
-            
-            # Clear widget references
-            self.widgets.clear()
-            
-            # Mark as inactive
-            self.is_active = False
-            
-            # Clear builder reference
-            self.builder = None
-            
-        except Exception as e:
-            print(f"Error during ColorBitMagic cleanup: {e}")
+        # Use shared cleanup utility
+        cleanup_resources(self)

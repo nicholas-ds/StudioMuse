@@ -1,19 +1,26 @@
 """Utility functions for processing palettes without LLM dependency."""
 import os
 import json
+import logging
+from typing import Dict, List, Any, Optional, Union
 from gi.repository import Gimp, Gegl
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
 from .palette_models import PaletteData, PhysicalPalette, ColorData
+from core.utils.file_io import get_plugin_storage_path, save_json_data, load_json_data
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("palette_processor")
 
 def log_error(message, exception=None):
-    """Helper function to log errors with optional exception details."""
+    """Log an error to the console."""
     if exception:
-        Gimp.message(f"Error: {message} - Exception: {exception}")
+        logger.error(f"{message}: {str(exception)}")
     else:
-        Gimp.message(f"Error: {message}")
+        logger.error(message)
 
 class PaletteProcessor:
     """Utility class for palette processing operations."""
@@ -23,12 +30,8 @@ class PaletteProcessor:
         """Save a palette to file."""
         try:
             if base_dir is None:
-                # Get GIMP's user data directory
-                gimp_dir = Gimp.directory()
-                base_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
-            
-            # Make sure directory exists
-            os.makedirs(base_dir, exist_ok=True)
+                # Use the centralized utility to get the storage path
+                base_dir = get_plugin_storage_path("physical_palettes", "colorBitMagic")
             
             # Use palette name as filename if none provided
             if filename is None:
@@ -40,11 +43,18 @@ class PaletteProcessor:
             # Create full path
             filepath = os.path.join(base_dir, filename)
             
-            # Save to JSON file
-            with open(filepath, 'w') as f:
-                f.write(palette.to_json())
+            # Use the centralized utility to save the file
+            if hasattr(palette, 'to_json'):
+                # First convert to dict if the palette object has custom serialization
+                palette_dict = palette.to_dict() if hasattr(palette, 'to_dict') else json.loads(palette.to_json())
+                save_success = save_json_data(palette_dict, filepath, create_dirs=True, indent=2)
+            else:
+                # If it's already a dict-like object
+                save_success = save_json_data(palette, filepath, create_dirs=True, indent=2)
             
-            return filepath
+            if save_success:
+                return filepath
+            return None
         except Exception as e:
             log_error("Failed to save palette", e)
             return None
@@ -54,9 +64,8 @@ class PaletteProcessor:
         """Load a palette from file."""
         try:
             if base_dir is None:
-                # Get GIMP's user data directory
-                gimp_dir = Gimp.directory()
-                base_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+                # Use the centralized utility to get the storage path
+                base_dir = get_plugin_storage_path("physical_palettes", "colorBitMagic")
             
             # Check if we received a filename with .json extension
             if palette_name.endswith('.json'):
@@ -67,18 +76,11 @@ class PaletteProcessor:
             # Create full path
             filepath = os.path.join(base_dir, filename)
             
-            # Check if file exists
-            if not os.path.exists(filepath):
-                log_error(f"Palette file not found: {filepath}")
-                return None
+            # Use the centralized utility to load the file
+            data = load_json_data(filepath, default=None)
             
-            # Load from JSON file
-            with open(filepath, 'r') as f:
-                data = json.load(f)
-            
-            # Make sure we have a dictionary
-            if not isinstance(data, dict):
-                log_error(f"Invalid palette data format: {type(data)}")
+            # If loading failed, return None
+            if data is None:
                 return None
             
             # Determine palette type and create appropriate object
@@ -121,9 +123,8 @@ class PaletteProcessor:
         """Returns a list of all available physical palettes."""
         try:
             if base_dir is None:
-                # Get GIMP's user data directory
-                gimp_dir = Gimp.directory()
-                base_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+                # Use the centralized utility to get the storage path
+                base_dir = get_plugin_storage_path("physical_palettes", "colorBitMagic")
             
             # If directory doesn't exist, return empty list
             if not os.path.exists(base_dir):
