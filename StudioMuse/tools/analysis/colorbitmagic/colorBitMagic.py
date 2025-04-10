@@ -11,6 +11,7 @@ from core.utils.colorBitMagic_utils import (
     get_palette_colors,
     log_error
 )
+from core.utils.ui import connect_signals  # Add this import
 import json
 import os
 
@@ -66,8 +67,14 @@ class ColorBitMagic:
         populate_physical_palette_dropdown(self.builder)
         
         # Connect list box selection handler
-        if self.widgets['resultListBox']:
-            self.widgets['resultListBox'].connect('row-selected', self.on_color_selected)
+        custom_handlers = {
+            'resultListBox': [('row-selected', self.on_color_selected)],
+            'submitButton': [('clicked', self.on_submit_clicked)],
+            'saveButton': [('clicked', self.on_save_clicked)],
+            'generateButton': [('clicked', self.on_generate_clicked)],
+            'closeButton': [('clicked', self.on_close_clicked)]
+        }
+        connect_signals(self.builder, self, custom_handlers)
 
     def log_message(self, message, level="info"):
         """Centralized logging function with active check"""

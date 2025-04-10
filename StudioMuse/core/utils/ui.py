@@ -34,4 +34,24 @@ class UILoader:
         )
         
         notebook_builder.add_from_file(notebook_path)
-        return notebook_builder 
+        return notebook_builder
+
+def connect_signals(builder, handler_object, custom_handlers=None):
+    """
+    Connect signals using builder with optional custom handlers.
+    
+    Args:
+        builder: Gtk.Builder instance
+        handler_object: Object containing signal handlers
+        custom_handlers: Dictionary of widget_id -> [(signal_name, handler_function)]
+    """
+    # Connect standard signals through builder
+    builder.connect_signals(handler_object)
+    
+    # Connect any custom handlers not defined in the XML
+    if custom_handlers:
+        for widget_id, handlers in custom_handlers.items():
+            widget = builder.get_object(widget_id)
+            if widget:
+                for signal_name, handler in handlers:
+                    widget.connect(signal_name, handler) 

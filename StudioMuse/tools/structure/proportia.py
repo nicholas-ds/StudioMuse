@@ -23,6 +23,8 @@ from core.utils.tools.structure.structure_utilities import (
     apply_css_class
 )
 
+from core.utils.ui import connect_signals  # Add this import
+
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
     
@@ -75,11 +77,6 @@ class ProportiaUI:
         self.measurement_name_entry = self.builder.get_object("measurementNameEntry")
         self.save_dimension_button = self.builder.get_object("saveDimensionButton")
         
-        # Connect other signals
-        self.calculate_button.connect("clicked", self.on_calculate_clicked)
-        self.measurement_input.connect("activate", self.on_calculate_clicked)
-        self.save_dimension_button.connect("clicked", self.on_save_dimension_clicked)
-        
         # Set default unit
         if self.unit_dropdown.get_active() == -1:
             self.unit_dropdown.set_active(0)
@@ -95,9 +92,6 @@ class ProportiaUI:
         self.new_group_entry.set_visible(False)
         self.new_group_entry.hide()  # Use both methods for safety
         
-        # Connect to the changed signal
-        self.group_dropdown.connect("changed", self.on_group_dropdown_changed)
-        
         # Store current measurements for easier access and updates
         self.current_measurements = []
         
@@ -109,6 +103,15 @@ class ProportiaUI:
         
         # Populate group dropdown with existing groups
         GLib.idle_add(self.populate_group_dropdown)
+        
+        # With this more structured approach:
+        custom_handlers = {
+            "addMeasurementButton": [("clicked", self.on_calculate_clicked)],
+            "measurementValueEntry": [("activate", self.on_calculate_clicked)],
+            "saveDimensionButton": [("clicked", self.on_save_dimension_clicked)],
+            "groupDropdownSidebar": [("changed", self.on_group_dropdown_changed)]
+        }
+        connect_signals(self.builder, self, custom_handlers)
     
     def verify_entry_visibility(self):
         """Force verify the entry visibility after UI is loaded"""
@@ -448,15 +451,10 @@ class ProportiaUI:
             else:
                 self.show_message_dialog("Failed to save changes", Gtk.MessageType.ERROR)
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-ui_path = os.path.join(os.path.dirname(os.path.dirname(script_dir)), "ui", "structure", "structure_notebook.xml")
-
-# For debugging - print the path and check if file exists
-print(f"UI path: {ui_path}")
-print(f"File exists: {os.path.exists(ui_path)}")
-
-builder = Gtk.Builder()
-builder.add_from_file(ui_path)
-
-# Create the UI instance
-proportia_ui = ProportiaUI(builder)
+    def cleanup(self):
+        """Clean up resources when the plugin is unloaded"""
+        # Clear references to prevent memory leaks
+        self.current_measurements = []
+        # Remove any active signal connections if needed
+        # This ensures proper resource cleanup when window manager calls it
+        logger.info("ProportiaUI resources cleaned up")

@@ -134,7 +134,7 @@ button.suggested-action:hover {
 .measurement-value {
     font-weight: bold;
     color: #a5d6a7; /* Light green for dark bg */
-    letter-spacing: -0.15em;
+    letter-spacing: -0.05em;
 }
 
 /* Entry fields */
