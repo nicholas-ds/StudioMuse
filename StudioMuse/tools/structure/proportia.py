@@ -14,13 +14,18 @@ logger = logging.getLogger("proportia")
 # Import our utility functions
 from core.utils.tools.structure.structure_utilities import (
     scale_by_sqrt2, 
-    load_measurements_from_file,
-    save_data_to_json,
-    load_json_data,
     group_measurements,
     get_unique_groups,
     load_css_for_proportia,
     apply_css_class
+)
+
+# Import new file I/O utilities
+from core.utils.file_io import (
+    get_plugin_storage_path,
+    save_json_data,
+    load_json_data,
+    normalize_measurement_data
 )
 
 # Import shared UI utilities
@@ -166,12 +171,17 @@ class ProportiaUI:
 
     def get_measurements_file_path(self) -> str:
         """Get the path to the measurements file"""
-        return os.path.join(
-            os.path.dirname(__file__), 
-            "..", "..", "docs", 
-            "proportiaExampleProject", 
-            "saved_dimensions.json"
+        # Use direct path based on the known location
+        file_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),  # Up to studioMuse root
+            "data", "tools", "structure", "saved_dimensions.json"
         )
+        
+        # Add debugging output
+        logger.info(f"Measurements file path: {file_path}")
+        logger.info(f"File exists: {os.path.exists(file_path)}")
+        
+        return file_path
     
     def populate_group_dropdown(self):
         """Populate the group dropdown with existing groups"""
@@ -200,9 +210,10 @@ class ProportiaUI:
         for child in self.widgets["measurementGroupBox"].get_children():
             self.widgets["measurementGroupBox"].remove(child)
         
-        # Load measurements using the utility function
+        # Load measurements using the new file_io utilities
         file_path = self.get_measurements_file_path()
-        self.current_measurements = load_measurements_from_file(file_path)
+        raw_data = load_json_data(file_path, default=[])
+        self.current_measurements = normalize_measurement_data(raw_data)
         
         if not self.current_measurements:
             # Display message when no measurements are found
@@ -261,9 +272,9 @@ class ProportiaUI:
         # Add to current measurements
         self.current_measurements.append(new_measurement)
         
-        # Save to file
+        # Save to file using the new file_io utility
         file_path = self.get_measurements_file_path()
-        if save_data_to_json(self.current_measurements, file_path):
+        if save_json_data(self.current_measurements, file_path, indent=2):
             # Show success message using shared utility
             show_message(f"Measurement '{name}' saved successfully", Gtk.MessageType.INFO)
             
@@ -438,7 +449,8 @@ class ProportiaUI:
                     break
             
             file_path = self.get_measurements_file_path()
-            if save_data_to_json(self.current_measurements, file_path):
+            # Update to use the new file_io utility
+            if save_json_data(self.current_measurements, file_path, indent=2):
                 self.load_and_display_measurements()
                 self.populate_group_dropdown()
             else:

@@ -4,10 +4,15 @@
 from gi.repository import Gtk, Gimp
 from core.utils.api_client import api_client
 from core.utils.colorBitMagic_utils import (
-    save_json_to_file,
     get_palette_colors,
     load_physical_palette_data,
     log_error
+)
+# Import new file I/O utilities
+from core.utils.file_io import (
+    get_plugin_storage_path,
+    save_json_data,
+    load_json_data
 )
 from core.utils.ui import (
     connect_signals,
@@ -357,18 +362,20 @@ class ColorBitMagic:
             return
 
         try:
-            # Define the output directory for physical palettes
-            gimp_dir = Gimp.directory()
-            physical_palettes_dir = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes")
+            # Define the output directory for physical palettes using the centralized utility
+            physical_palettes_dir = get_plugin_storage_path("physical_palettes", "colorBitMagic")
             
-            # Save the palette data
-            filepath = save_json_to_file(
-                data=self.current_palette,
-                filename=self.current_palette["name"],
-                directory=physical_palettes_dir
-            )
+            # Ensure filename is valid
+            filename = f"{self.current_palette['name']}.json"
+            filepath = os.path.join(physical_palettes_dir, filename)
             
-            if filepath:
+            # Save the palette data using the centralized utility
+            if save_json_data(
+                self.current_palette,
+                filepath,
+                create_dirs=True,
+                indent=2
+            ):
                 self.log_message(f"Palette '{self.current_palette['name']}' saved successfully.")
                 # Refresh the physical palette dropdown
                 self.populate_physical_palette_dropdown()

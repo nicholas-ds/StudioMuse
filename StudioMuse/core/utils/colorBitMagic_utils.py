@@ -7,6 +7,7 @@ import os
 
 from core.models.palette_models import PaletteData, PhysicalPalette, ColorData
 from core.models.palette_processor import PaletteProcessor, log_error
+from core.utils.file_io import get_plugin_storage_path, load_json_data, save_json_data
 
 def populate_dropdown(builder, dropdown_id, items, error_message="No items found"):
     """
@@ -246,27 +247,27 @@ def save_json_to_file(data, filename, directory=None):
         str: Path to the saved file or None if failed
     """
     try:
+        from core.utils.file_io import get_plugin_storage_path, save_json_data
+        
         # Ensure filename has .json extension
         if not filename.endswith('.json'):
             filename = f"{filename}.json"
             
         # Determine the directory path
         if directory is None:
-            gimp_dir = Gimp.directory()
-            directory = os.path.join(gimp_dir, "plug-ins", "colorBitMagic")
-            
-        # Create directory if it doesn't exist
-        os.makedirs(directory, exist_ok=True)
-            
+            directory = get_plugin_storage_path("", "colorBitMagic")
+        
         # Full path to the file
         filepath = os.path.join(directory, filename)
         
-        # Save the data
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=2)
-            
-        Gimp.message(f"Data saved successfully to '{filepath}'.")
-        return filepath
+        # Save the data using the centralized utility
+        success = save_json_data(data, filepath, create_dirs=True, indent=2)
+        
+        if success:
+            Gimp.message(f"Data saved successfully to '{filepath}'.")
+            return filepath
+        else:
+            return None
             
     except Exception as e:
         log_error(f"Failed to save data to file '{filename}'", e)
@@ -293,24 +294,17 @@ def load_physical_palette_data(palette_name):
         Dictionary containing palette data or a list of color names
     """
     try:
-        from gi.repository import Gimp
-        import os
-        import json
+        # Get the path to the physical palette file using the centralized utility
+        palette_path = get_plugin_storage_path(
+            f"physical_palettes/{palette_name}.json", 
+            "colorBitMagic"
+        )
         
-        # Get GIMP's user data directory
-        gimp_dir = Gimp.directory()
-        
-        # Construct the path to the physical palette file
-        palette_path = os.path.join(gimp_dir, "plug-ins", "colorBitMagic", "physical_palettes", f"{palette_name}.json")
-        
-        # Check if the file exists
-        if not os.path.exists(palette_path):
-            Gimp.message(f"Physical palette file not found: {palette_path}")
-            return {"colors": [palette_name]}
-        
-        # Load the JSON file
-        with open(palette_path, 'r') as f:
-            palette_data = json.load(f)
+        # Load the JSON file using the centralized utility
+        palette_data = load_json_data(
+            palette_path, 
+            default={"colors": [palette_name]}
+        )
         
         # Return the palette data
         return palette_data
