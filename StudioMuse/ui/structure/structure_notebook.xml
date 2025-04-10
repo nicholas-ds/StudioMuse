@@ -5,9 +5,10 @@
   <object class="GtkNotebook" id="structureNotebook">
     <property name="visible">True</property>
     <property name="can-focus">True</property>
+    <property name="width-request">1050</property>
     <child>
       <object class="GtkBox" id="measuringToolBox">
-        <property name="height-request">650</property>
+        <property name="width-request">1050</property>
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
@@ -24,13 +25,13 @@
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="label" translatable="yes">Proportia Measuring &amp; Scaling</property>
-                <style>
-                  <class name="proportia-title"/>
-                </style>
                 <attributes>
                   <attribute name="weight" value="bold"/>
                   <attribute name="scale" value="2"/>
                 </attributes>
+                <style>
+                  <class name="proportia-title"/>
+                </style>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -126,25 +127,21 @@
                 <property name="orientation">vertical</property>
                 <property name="spacing">15</property>
                 <child>
-                  <!-- New Measurement Frame -->
                   <object class="GtkFrame" id="addMeasurementFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="label-xalign">0</property>
                     <property name="shadow-type">none</property>
-                    <style>
-                      <class name="measurement-frame"/>
-                    </style>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">10</property>
-                        <property name="margin-top">8</property>
-                        <property name="margin-bottom">5</property>
                         <property name="margin-start">8</property>
                         <property name="margin-end">8</property>
+                        <property name="margin-top">8</property>
+                        <property name="margin-bottom">5</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">10</property>
                         <child>
                           <object class="GtkComboBoxText" id="unitDropdown">
                             <property name="visible">True</property>
@@ -196,14 +193,17 @@
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="label">📏 Add New Measurement</property>
-                        <style>
-                          <class name="frame-title"/>
-                        </style>
                         <attributes>
                           <attribute name="weight" value="bold"/>
                         </attributes>
+                        <style>
+                          <class name="frame-title"/>
+                        </style>
                       </object>
                     </child>
+                    <style>
+                      <class name="measurement-frame"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -212,23 +212,19 @@
                   </packing>
                 </child>
                 <child>
-                  <!-- Save Dimension Frame -->
                   <object class="GtkFrame" id="saveDimensionFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="label-xalign">0</property>
                     <property name="shadow-type">none</property>
-                    <style>
-                      <class name="measurement-frame"/>
-                    </style>
                     <child>
                       <object class="GtkBox" id="saveNewDimension_main">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="margin-top">8</property>
-                        <property name="margin-bottom">5</property>
                         <property name="margin-start">8</property>
                         <property name="margin-end">8</property>
+                        <property name="margin-top">8</property>
+                        <property name="margin-bottom">5</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">10</property>
                         <child>
@@ -312,14 +308,17 @@
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="label">💾 Save Measurement</property>
-                        <style>
-                          <class name="frame-title"/>
-                        </style>
                         <attributes>
                           <attribute name="weight" value="bold"/>
                         </attributes>
+                        <style>
+                          <class name="frame-title"/>
+                        </style>
                       </object>
                     </child>
+                    <style>
+                      <class name="measurement-frame"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="expand">True</property>

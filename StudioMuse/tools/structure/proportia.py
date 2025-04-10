@@ -331,7 +331,7 @@ class ProportiaUI:
         apply_css_class(header, "group-header")
         
         # Connect toggle for expansion
-        header.connect("clicked", self.on_group_header_clicked, expander, arrow_icon)
+        header.connect("clicked", self.on_group_header_clicked, expander)
         
         # Add header to the container
         group_container.pack_start(header, False, False, 0)
@@ -359,16 +359,10 @@ class ProportiaUI:
         # Add group to main container
         self.measurement_group_box.add(group_container)
     
-    def on_group_header_clicked(self, button, expander, arrow):
+    def on_group_header_clicked(self, button, expander):
         """Toggle the expander when the header is clicked"""
         expanded = expander.get_expanded()
         expander.set_expanded(not expanded)
-        
-        # Update the arrow icon based on expanded state
-        if expanded:
-            arrow.set_from_icon_name("pan-end-symbolic", Gtk.IconSize.MENU)
-        else:
-            arrow.set_from_icon_name("pan-down-symbolic", Gtk.IconSize.MENU)
     
     def create_measurement_item_ui(self, measurement: Dict[str, Any]) -> Gtk.Box:
         """Create UI for a single measurement item with improved styling"""
@@ -442,22 +436,18 @@ class ProportiaUI:
         dialog.destroy()
         
         if response == Gtk.ResponseType.YES:
-            # Find and remove the measurement
             for i, m in enumerate(self.current_measurements):
                 if m.get('name') == measurement['name'] and m.get('value') == measurement['value']:
                     del self.current_measurements[i]
                     break
             
-            # Save updated measurements
             file_path = self.get_measurements_file_path()
             if save_data_to_json(self.current_measurements, file_path):
-                # Refresh display
                 self.load_and_display_measurements()
                 self.populate_group_dropdown()
             else:
                 self.show_message_dialog("Failed to save changes", Gtk.MessageType.ERROR)
 
-# Load the UI
 script_dir = os.path.dirname(os.path.abspath(__file__))
 ui_path = os.path.join(os.path.dirname(os.path.dirname(script_dir)), "ui", "structure", "structure_notebook.xml")
 
