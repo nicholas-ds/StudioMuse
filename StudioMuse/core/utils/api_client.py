@@ -187,6 +187,4 @@ class BackendAPIClient:
             logger.error(f"Physical palette creation failed: {e}")
             return {"success": False, "error": str(e)}
 
-# Singleton instance
-api_client = BackendAPIClient()
 
