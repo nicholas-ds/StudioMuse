@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from gi.repository import Gtk, Gimp
-from core.utils.api_client import api_client
 from core.utils.colorBitMagic_utils import (
     get_palette_colors,
     load_physical_palette_data,
@@ -297,6 +296,9 @@ class ColorBitMagic:
             
             # Process through API
             try:
+                from core.utils.api_client import BackendAPIClient
+                api_client = BackendAPIClient()
+
                 response = api_client.demystify_palette(
                     gimp_palette_colors=gimp_palette_colors,
                     physical_palette_data=physical_color_names
@@ -401,6 +403,9 @@ class ColorBitMagic:
         try:
             # Call the backend API
             self.log_message(f"Sending request to API with text: {entry_text}")
+            from core.utils.api_client import BackendAPIClient
+            api_client = BackendAPIClient()
+
             result = api_client.create_physical_palette(entry_text)
             
             if not result:

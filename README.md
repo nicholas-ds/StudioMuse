@@ -6,19 +6,20 @@ StudioMuse is a plugin based suite of tools and mini applications built to enhan
 
 Physical palettes are generated using Perplexity's web search API. Physical palettes are saved as JSON files to store for repeated use and future tools to utilize.
 
-
 ### Technical Requirements
 
 - **Platform**: GIMP 3.x
 - **Backend**: Python, Perplexity Sonar API, Google Gemini API
 
-- ### Environment Variables
+### Environment Variables
 
 Required API keys:
+
 - `PERPLEXITY_KEY`: For color matching and physical palette generation
 - `GEMINI_API_KEY`: For advanced AI features and analysis
 
 You can set these using:
+
 ```bash
 export PERPLEXITY_KEY='your-perplexity-key'
 export GEMINI_API_KEY='your-gemini-key'
@@ -27,25 +28,29 @@ export GEMINI_API_KEY='your-gemini-key'
 ### Development Status
 
 - **ColorBitMagic Plugin**: ✅ Complete!
+
   - Full palette analysis and matching
   - Physical palette generation
   - LLM-powered color theory assistance
 
 - **Proportia Plugin**: 🚧 In Development
+
   - Measurement and scaling tools
   - Canvas planning
 
 - **VisionLab**: 📋 Planned
+
   - Vision model based tools TBD
-  
 
 ### Configuration
 
 Configuration files are stored in:
+
 - Windows: `%APPDATA%\GIMP\3.0\studiomuse\`
 - Mac: `~/Library/Application Support/GIMP/3.0/studiomuse\`
 
 The plugin supports configuration through:
+
 1. Environment variables (highest priority)
 2. User configuration files
 3. Default configurations
@@ -58,10 +63,15 @@ The plugin supports configuration through:
    git clone https://github.com/nicholas-ds/StudioMuse.git
    ```
 3. Navigate to the `StudioMuse/plugins` directory and run the installation script:
+
    ```bash
-   cd StudioMuse/plugins
+   # On macOS/Linux:
    ./install.sh
+
+   # On Windows (Git Bash only):
+   bash install_windows.sh
    ```
+
 4. Set the `PERPLEXITY_KEY` environment variable with your API key:
    ```bash
    export PERPLEXITY_KEY='your-api-key-here'
@@ -71,6 +81,40 @@ The plugin supports configuration through:
    pip install -r requirements.txt
    ```
 
+### 🚟 Windows Setup
+
+#### 📁 Manual Installation (No Terminal Required)
+
+1. Download or unzip the `StudioMuse` plugin folder.
+2. Navigate to:
+   ```
+   C:\Users\<YourUsername>\AppData\Roaming\GIMP\3.0\plug-ins\
+   ```
+3. Copy the entire `studiomuse` folder into that directory:
+   ```
+   C:\Users\<YourUsername>\AppData\Roaming\GIMP\3.0\plug-ins\studiomuse
+   ```
+4. Inside that folder, confirm this file exists:
+   ```
+   studiomuse.py
+   ```
+5. Open GIMP
+6. Open or create a new image (important!)
+7. Navigate to:
+   ```
+   Extensions → StudioMuse → StudioMuse Suite
+   ```
+
+🎉 The plugin will now launch.
+
+#### 🧱️ Troubleshooting
+
+If StudioMuse does not appear in the Extensions menu:
+
+- Ensure the full folder structure was copied, not just the Python file
+- Restart GIMP
+- Make sure an image is open — the menu will be greyed out otherwise
+
 ### Usage
 
 1. Open a reference photo in GIMP.
@@ -78,12 +122,13 @@ The plugin supports configuration through:
 3. The suite contains several tools organized into categories:
    - **Analysis**: Color matching and palette tools
    - **Structure**: Image composition tools
-   - **VisionLab**: Advanced visualization features
+   - **VisionLab**: Advanced visualization features (Coming Soon)
    - **Settings**: Configuration options
 
 ### ColorBitMagic Analysis Tools
 
 #### Palette Demystifyer
+
 This tool teaches you practical color matching theory by bridging the gap between your physical art supplies and
 your reference photos.
 
@@ -104,7 +149,7 @@ your reference photos.
    - Brand name
    - Number of colors in the set
    - Product name/line
-   Example: "Mont Marte 52 Piece Oil Pastel Kit"
+     Example: "Mont Marte 52 Piece Oil Pastel Kit"
 3. Click "Generate" to create a digital version of your physical palette
 4. Review the results and click "Save" to store for future use
 
@@ -114,7 +159,7 @@ your reference photos.
 
 1. Click "Add Physical Palette" button.
 2. In the dialog that appears, describe the art kit you are using. It is helpful to include the brand, number of items in the set, and (if the kit has it) the names of the kit itself.
- ex. "Mont Marte 52 Piece Oil Pastel Kit"
+   ex. "Mont Marte 52 Piece Oil Pastel Kit"
 3. Click "generate", wait for LLM response.
 4. The LLM will return a list of colors that are in the physical palette.
 5. If you are happy with the results, click "Save".
@@ -130,6 +175,3 @@ your reference photos.
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file.
-
-
-
