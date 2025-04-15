@@ -108,7 +108,11 @@ class BackendAPIClient:
 
             result = self._make_request("palette/create", method="POST", data=payload)
             logger.info(f"API Response: {result}")
-            return result
+            
+            if result["success"]:
+                return result["response"]
+            else:
+                return {"success": False, "error": result["error"]}
 
         except Exception as e:
             logger.error(f"Exception during API call: {e}")
