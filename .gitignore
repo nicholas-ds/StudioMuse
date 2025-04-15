@@ -46,7 +46,9 @@ StudioMuse/docs.text
 StudioMuse/gimp_api_documentation.txt
 StudioMuse/ProjectOverview.md
 StudioMuse/docs/errorLog.txt
-StudioMuse/docs/phase2Refactor/futureDev.md
-StudioMuse/docs/phase2Refactor/suiteUpdate.md
-StudioMuse/docs/phase2Refactor/refactorTree.txt
 *.cursorrules
+StudioMuse/vendored/
+studioMuse/vendored/
+
+# Ignore phase2Refactor documentation
+StudioMuse/docs/phase2Refactor/

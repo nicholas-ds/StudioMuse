@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Detect operating system
@@ -10,7 +11,7 @@ case "$OS" in
         GIMP_PLUGIN_DIR="$HOME/.config/GIMP/3.0/plug-ins"
         ;;
     "MINGW"*|"MSYS"*|"CYGWIN"*)
-        GIMP_PLUGIN_DIR="$(cmd.exe /c "echo %APPDATA%" | tr -d '\r')/GIMP/3.0/plug-ins"
+        GIMP_PLUGIN_DIR="$APPDATA/GIMP/3.0/plug-ins"
         ;;
     *)
         echo "Unsupported operating system: $OS"
@@ -63,6 +64,7 @@ case "$OS" in
         gimp &
         ;;
     "MINGW"*|"MSYS"*|"CYGWIN"*)
-        cmd.exe /c start gimp
+        start gimp
         ;;
 esac 
+
