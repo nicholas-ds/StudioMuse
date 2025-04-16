@@ -44,6 +44,9 @@ from core.models.measurement_models import Measurement, MeasurementCollection
 # Import validation utilities
 from core.utils.validation import validate_required_field, validate_numeric, validate_and_show_errors
 
+# Import harmonic measure mode
+from tools.structure.harmonicMeasure import HarmonicMeasureMode, initialize_popup_window
+
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
     
@@ -125,7 +128,8 @@ class ProportiaUI:
             "saveDimensionButton",
             "groupDropdownSidebar",
             "newGroupName",
-            "measurementGroupBox"
+            "measurementGroupBox",
+            "startMeasuringButton"
         ]
         self.widgets = collect_widgets(builder, widget_ids)
         
@@ -140,6 +144,9 @@ class ProportiaUI:
         # Store current measurements for easier access and updates
         self.current_measurements = []
         
+        # Initialize harmonic measure mode as None (will be created when needed)
+        self.harmonic_measure = None
+        
         # Schedule initialization tasks
         GLib.idle_add(self.verify_entry_visibility)
         GLib.idle_add(self.load_and_display_measurements)
@@ -150,7 +157,8 @@ class ProportiaUI:
             "addMeasurementButton": [("clicked", self.on_calculate_clicked)],
             "measurementValueEntry": [("activate", self.on_calculate_clicked)],
             "saveDimensionButton": [("clicked", self.on_save_dimension_clicked)],
-            "groupDropdownSidebar": [("changed", self.on_group_dropdown_changed)]
+            "groupDropdownSidebar": [("changed", self.on_group_dropdown_changed)],
+            "startMeasuringButton": [("clicked", self.on_start_measuring_clicked)]
         }
         connect_signals(self.builder, self, custom_handlers)
     
@@ -566,6 +574,27 @@ class ProportiaUI:
                 self.populate_group_dropdown()
             else:
                 show_message("Failed to save changes", Gtk.MessageType.ERROR)
+
+    def on_start_measuring_clicked(self, button):
+        """Handle start measuring button click"""
+        logger.info("Harmonic Measure button clicked!")
+        Gimp.message("Harmonic Measure button clicked!")
+        
+        # Skip the image check for now since we're just showing the popup
+        # The GIMP 3.0 API doesn't provide Gimp.get_default_image()
+        
+        # Initialize the popup window using the function from harmonicMeasure.py
+        from tools.structure.harmonicMeasure import initialize_popup_window
+        
+        # Initialize popup window with the button as parent widget for proper positioning
+        popup_window, builder = initialize_popup_window(button)
+        
+        if popup_window:
+            Gimp.message("Harmonic Measure popup window opened successfully")
+            logger.info("Harmonic Measure popup window opened successfully")
+        else:
+            Gimp.message("Failed to open the measurement popup window")
+            logger.error("Failed to open the measurement popup window")
 
     def cleanup(self):
         """Clean up resources when the plugin is unloaded"""

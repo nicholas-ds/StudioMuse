@@ -2,6 +2,9 @@ import os
 import json
 import logging
 from typing import Dict, Any, List, Optional
+import sys
+from urllib import request, error
+import urllib.parse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -14,39 +17,53 @@ class BackendAPIClient:
         self.base_url = base_url
         logger.info(f"Initialized API client with base URL: {base_url}")
 
-    def health_check(self) -> Dict[str, Any]:
+    def _make_request(self, endpoint: str, method: str = "GET", data: Dict = None, timeout: int = 30) -> Dict[str, Any]:
+        """Make HTTP request using urllib"""
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        headers = {'Content-Type': 'application/json'}
+        
         try:
-            import requests
-            logger.info(f"Attempting health check to {self.base_url}/health")
-            response = requests.get(f"{self.base_url}/health", timeout=3)
-            if response.status_code == 200:
-                try:
-                    return response.json()
-                except json.JSONDecodeError:
-                    return {"status": "error", "error": f"Invalid JSON response: {response.text}"}
-            else:
-                return {"status": "error", "error": f"API returned status code: {response.status_code}"}
-        except ImportError:
-            return {"status": "error", "error": "'requests' module is missing in this GIMP environment."}
+            if data is not None:
+                data = json.dumps(data).encode('utf-8')
+            
+            req = request.Request(
+                url,
+                data=data,
+                headers=headers,
+                method=method
+            )
+            
+            with request.urlopen(req, timeout=timeout) as response:
+                response_data = response.read().decode('utf-8')
+                return {"success": True, "response": json.loads(response_data)}
+                
+        except error.HTTPError as e:
+            logger.error(f"HTTP error: {e.code} - {e.reason}")
+            return {"success": False, "error": f"API error: {e.reason}"}
+        except error.URLError as e:
+            logger.error(f"URL error: {e.reason}")
+            return {"success": False, "error": f"Connection error: {e.reason}"}
         except Exception as e:
-            return {"status": "error", "error": str(e)}
+            logger.error(f"Request error: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def health_check(self) -> Dict[str, Any]:
+        return self._make_request("health", timeout=3)
 
     def get_config(self) -> Dict[str, Any]:
         try:
-            import requests
-            response = requests.get(f"{self.base_url}/config")
-            response.raise_for_status()
-            return response.json()
-        except ImportError:
-            raise Exception("'requests' module is missing in this GIMP environment.")
+            result = self._make_request("config")
+            if result["success"]:
+                return result["response"]
+            raise Exception(result["error"])
         except Exception as e:
             raise Exception(f"Failed to get backend config: {str(e)}")
 
     def demystify_palette(self, gimp_palette_colors, physical_palette_data):
         try:
-            import requests
             from core.models.palette_processor import PaletteProcessor
 
+            # Convert GIMP palette colors to a serializable format
             serializable_colors = {}
             for i, color in enumerate(gimp_palette_colors):
                 name = f"Color {i+1}"
@@ -66,31 +83,19 @@ class BackendAPIClient:
             }
 
             logger.info("Sending palette demystification request")
-            response = requests.post(f"{self.base_url}/palette/demystify", json=payload)
+            api_result = self._make_request("palette/demystify", method="POST", data=payload)
+            
+            # Return in the original format expected by the rest of the code
+            if api_result["success"]:
+                return api_result["response"]
+            else:
+                return {"success": False, "error": api_result["error"]}
 
-            if response.status_code != 200:
-                return {"success": False, "error": f"API error: {response.text}"}
-
-            try:
-                return response.json()
-            except json.JSONDecodeError as e:
-                return {
-                    "success": False,
-                    "error": f"Failed to parse API response as JSON: {str(e)}",
-                    "raw_response": response.text
-                }
-
-        except ImportError:
-            return {"success": False, "error": "'requests' module is not available in this GIMP environment."}
         except Exception as e:
+            logger.error(f"Palette demystification error: {e}")
             return {"success": False, "error": str(e)}
 
     def create_physical_palette(self, entry_text: str, llm_provider: str = "perplexity", temperature: float = 0.7):
-        try:
-            import requests
-        except ImportError:
-            return {"success": False, "error": "'requests' module is not available in this GIMP environment."}
-
         try:
             payload = {
                 "entry_text": entry_text,
@@ -101,22 +106,13 @@ class BackendAPIClient:
             logger.info(f"Sending request to: {self.base_url}/palette/create")
             logger.info(f"Payload:\n{json.dumps(payload, indent=2)}")
 
-            response = requests.post(f"{self.base_url}/palette/create", json=payload)
-
-            logger.info(f"Response status: {response.status_code}")
-            logger.info(f"Response text: {response.text}")
-
-            if response.status_code != 200:
-                return {"success": False, "error": f"API error: {response.text}"}
-
-            try:
-                return response.json()
-            except json.JSONDecodeError as e:
-                return {
-                    "success": False,
-                    "error": f"Failed to parse API response as JSON: {str(e)}",
-                    "raw_response": response.text
-                }
+            result = self._make_request("palette/create", method="POST", data=payload)
+            logger.info(f"API Response: {result}")
+            
+            if result["success"]:
+                return result["response"]
+            else:
+                return {"success": False, "error": result["error"]}
 
         except Exception as e:
             logger.error(f"Exception during API call: {e}")
