@@ -9,7 +9,7 @@
     <property name="step-increment">0.5</property>
     <property name="page-increment">1</property>
   </object>
-  <object class="GtkWindow">
+  <object class="GtkDialog" id="proportiaPopupDialog">
     <property name="name">proportiaPopupWindow</property>
     <property name="width-request">220</property>
     <property name="height-request">120</property>
@@ -17,16 +17,14 @@
     <property name="halign">start</property>
     <property name="hexpand">False</property>
     <property name="vexpand">False</property>
-    <property name="type">popup</property>
     <property name="resizable">False</property>
     <property name="modal">True</property>
+    <property name="use-header-bar">0</property>
     <property name="window-position">mouse</property>
     <property name="default-width">220</property>
     <property name="default-height">120</property>
-    <property name="hide-titlebar-when-maximized">True</property>
-    <property name="decorated">False</property>
     <property name="gravity">center</property>
-    <child>
+    <child internal-child="vbox">
       <object class="GtkBox">
         <property name="width-request">220</property>
         <property name="height-request">120</property>
@@ -47,21 +45,16 @@
             <property name="can-focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkEntry">
+              <object class="GtkEntry" id="measurementNameEntry">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="margin-start">3</property>
                 <property name="margin-end">3</property>
                 <property name="placeholder-text" translatable="yes">Enter name of measurement...</property>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
             </child>
             <child>
-              <object class="GtkComboBoxText">
+              <object class="GtkComboBoxText" id="groupDropdown">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="margin-start">5</property>
@@ -72,12 +65,6 @@
                   <item id="1" translatable="yes">++ Add New Group</item>
                 </items>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">4</property>
-                <property name="position">1</property>
-              </packing>
             </child>
             <child>
               <object class="GtkEntry" id="newGroupEntry">
@@ -86,118 +73,44 @@
                 <property name="margin-end">3</property>
                 <property name="placeholder-text" translatable="yes">Enter new group name...</property>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">4</property>
-                <property name="position">2</property>
-              </packing>
             </child>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkLabel" id="measurementValueLabel">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="spacing">6</property>
-            <child>
-              <object class="GtkCheckButton">
-                <property name="label" translatable="yes">Show Label</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">False</property>
-                <property name="tooltip-text" translatable="yes">Toggle whether a label is shown next to the measurement line
-</property>
-                <property name="draw-indicator">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkColorButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">Select the color of the measurement line
-</property>
-                <property name="rgba">rgb(38,162,105)</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSpinButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="tooltip-text" translatable="yes">Set the line thickness (in pixels)</property>
-                <property name="adjustment">LineThicknessAdjustment</property>
-                <property name="value">2</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
+            <property name="label" translatable="yes">0.00 px</property>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">1</property>
-          </packing>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkComboBoxText" id="measurementUnitDropdown">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="halign">center</property>
-            <property name="valign">center</property>
-            <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
-            <property name="spacing">85</property>
-            <child>
-              <object class="GtkButton">
-                <property name="label" translatable="yes">Save</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="label" translatable="yes">Close</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">2</property>
-          </packing>
+        </child>
+      </object>
+    </child>
+    <child internal-child="action_area">
+      <object class="GtkButtonBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="layout-style">end</property>
+        <child>
+          <object class="GtkButton" id="saveButton">
+            <property name="label" translatable="yes">Save</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="cancelButton">
+            <property name="label" translatable="yes">Cancel</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+          </object>
         </child>
       </object>
     </child>

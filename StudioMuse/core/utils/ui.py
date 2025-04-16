@@ -222,3 +222,124 @@ def load_css_for_plugin(css_path, fallback_css=None):
     except Exception as e:
         print(f"Error loading CSS: {e}")
         return False 
+
+class DialogBuilder:
+    """
+    Utility class for building and managing popup dialogs.
+    This provides a consistent approach to creating dialog windows across the application.
+    """
+    
+    @staticmethod
+    def create_from_file(file_path, parent_window=None):
+        """
+        Create a dialog from an XML UI file.
+        
+        Args:
+            file_path: Path to the dialog XML file
+            parent_window: Optional parent window to make dialog transient for
+            
+        Returns:
+            Tuple of (dialog, builder) or (None, None) if creation fails
+        """
+        try:
+            # Check if file exists
+            if not os.path.exists(file_path):
+                print(f"Dialog XML file not found: {file_path}")
+                return None, None
+            
+            # Create builder and load file
+            builder = Gtk.Builder()
+            builder.add_from_file(file_path)
+            
+            # Find the dialog
+            dialog = None
+            for obj in builder.get_objects():
+                if isinstance(obj, Gtk.Dialog) or isinstance(obj, Gtk.Window):
+                    dialog = obj
+                    break
+            
+            if not dialog:
+                print("No dialog or window found in the UI file")
+                return None, None
+            
+            # Set up dialog properties
+            if parent_window and isinstance(parent_window, Gtk.Window):
+                dialog.set_transient_for(parent_window)
+                
+            return dialog, builder
+        
+        except Exception as e:
+            print(f"Error creating dialog: {e}")
+            return None, None
+    
+    @staticmethod
+    def show_dialog(dialog, builder, configure_callback=None):
+        """
+        Configure and show a dialog.
+        
+        Args:
+            dialog: Dialog to show
+            builder: Builder containing dialog widgets
+            configure_callback: Optional function(dialog, builder) to configure the dialog before showing
+            
+        Returns:
+            The dialog for further operations
+        """
+        try:
+            # Allow custom configuration
+            if configure_callback and callable(configure_callback):
+                configure_callback(dialog, builder)
+            
+            # Display the dialog
+            dialog.show_all()
+            return dialog
+            
+        except Exception as e:
+            print(f"Error showing dialog: {e}")
+            return None
+    
+    @staticmethod
+    def create_message_dialog(message, title=None, message_type=Gtk.MessageType.INFO, 
+                             buttons=Gtk.ButtonsType.OK, parent=None):
+        """
+        Create and show a simple message dialog.
+        
+        Args:
+            message: Message text to display
+            title: Optional dialog title
+            message_type: Type of message (INFO, WARNING, ERROR, etc.)
+            buttons: Button configuration
+            parent: Optional parent window
+            
+        Returns:
+            Response ID from the dialog
+        """
+        dialog = Gtk.MessageDialog(
+            transient_for=parent,
+            flags=0,
+            message_type=message_type,
+            buttons=buttons,
+            text=message
+        )
+        
+        if title:
+            dialog.set_title(title)
+            
+        response = dialog.run()
+        dialog.destroy()
+        return response
+    
+    @staticmethod
+    def collect_dialog_widgets(builder, widget_ids):
+        """
+        Collect dialog widgets into a dictionary.
+        Wrapper around collect_widgets for dialog-specific use.
+        
+        Args:
+            builder: Builder containing the widgets
+            widget_ids: List of widget IDs to collect
+            
+        Returns:
+            Dictionary of widget IDs to widgets
+        """
+        return collect_widgets(builder, widget_ids) 

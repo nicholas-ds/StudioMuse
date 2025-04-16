@@ -45,7 +45,7 @@ from core.models.measurement_models import Measurement, MeasurementCollection
 from core.utils.validation import validate_required_field, validate_numeric, validate_and_show_errors
 
 # Import harmonic measure mode
-from tools.structure.harmonicMeasure import HarmonicMeasureMode, initialize_popup_window
+from tools.structure.harmonicMeasure import initialize_popup_window, show_measurement_popup
 
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
@@ -580,9 +580,6 @@ class ProportiaUI:
         logger.info("Harmonic Measure button clicked!")
         Gimp.message("Harmonic Measure button clicked!")
         
-        # Skip the image check for now since we're just showing the popup
-        # The GIMP 3.0 API doesn't provide Gimp.get_default_image()
-        
         # Initialize the popup window using the function from harmonicMeasure.py
         from tools.structure.harmonicMeasure import initialize_popup_window
         
@@ -590,6 +587,14 @@ class ProportiaUI:
         popup_window, builder = initialize_popup_window(button)
         
         if popup_window:
+            # Set up UI handler to ensure signals are connected
+            from tools.structure.harmonicMeasure import HarmonicMeasureUI
+            ui_handler = HarmonicMeasureUI(builder, popup_window, button, self)
+            
+            # Extra safety to ensure dialog is visible
+            popup_window.present()
+            popup_window.show_all()
+            
             Gimp.message("Harmonic Measure popup window opened successfully")
             logger.info("Harmonic Measure popup window opened successfully")
         else:
