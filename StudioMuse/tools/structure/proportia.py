@@ -35,7 +35,8 @@ from core.utils.ui import (
     show_message,
     populate_dropdown,
     cleanup_resources,
-    load_css_for_plugin
+    load_css_for_plugin,
+    DialogBuilder
 )
 
 # Import measurement models
@@ -45,7 +46,7 @@ from core.models.measurement_models import Measurement, MeasurementCollection
 from core.utils.validation import validate_required_field, validate_numeric, validate_and_show_errors
 
 # Import harmonic measure mode
-from tools.structure.harmonicMeasure import initialize_popup_window, show_measurement_popup
+from tools.structure.harmonicMeasure import HarmonicMeasureUI
 
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
@@ -575,26 +576,71 @@ class ProportiaUI:
             else:
                 show_message("Failed to save changes", Gtk.MessageType.ERROR)
 
+    def show_measurement_popup(self, measurement_value=0.0, unit="px", parent_widget=None):
+        """
+        Create and display the measurement popup window
+        
+        Args:
+            measurement_value: Initial measurement value to display
+            unit: Initial unit (px, cm, in)
+            parent_widget: Widget that triggered the popup
+            
+        Returns:
+            The popup window and builder objects for further interaction
+        """
+        try:
+            # Get parent window if applicable
+            parent_window = None
+            if parent_widget:
+                parent_window = parent_widget.get_toplevel()
+                if not isinstance(parent_window, Gtk.Window):
+                    parent_window = None
+            
+            # Get path to dialog XML
+            popup_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), 
+                "../../ui/structure/proportiaPopup.xml"
+            )
+            
+            # Use the DialogBuilder to create the dialog
+            dialog, builder = DialogBuilder.create_from_file(popup_path, parent_window)
+            
+            if not dialog or not builder:
+                logger.error("Failed to create dialog")
+                return None, None
+            
+            # Initialize the UI handler
+            ui_handler = HarmonicMeasureUI(builder, dialog, parent_widget, self)
+            
+            # Make sure dialog is properly displayed
+            dialog.set_keep_above(True)
+            dialog.present()
+            dialog.show_all()
+            
+            # Set initial measurement value if provided
+            try:
+                value_label = builder.get_object("measurementValueLabel")
+                if value_label and measurement_value is not None:
+                    value_label.set_text(f"{measurement_value:.2f} {unit}")
+            except Exception as e:
+                logger.error(f"Error setting measurement value: {e}")
+            
+            logger.info("Dialog shown successfully")
+            return dialog, builder
+            
+        except Exception as e:
+            logger.error(f"Error in show_measurement_popup: {e}")
+            return None, None
+
     def on_start_measuring_clicked(self, button):
         """Handle start measuring button click"""
         logger.info("Harmonic Measure button clicked!")
         Gimp.message("Harmonic Measure button clicked!")
         
-        # Initialize the popup window using the function from harmonicMeasure.py
-        from tools.structure.harmonicMeasure import initialize_popup_window
-        
-        # Initialize popup window with the button as parent widget for proper positioning
-        popup_window, builder = initialize_popup_window(button)
+        # Create the popup window
+        popup_window, builder = self.show_measurement_popup(parent_widget=button)
         
         if popup_window:
-            # Set up UI handler to ensure signals are connected
-            from tools.structure.harmonicMeasure import HarmonicMeasureUI
-            ui_handler = HarmonicMeasureUI(builder, popup_window, button, self)
-            
-            # Extra safety to ensure dialog is visible
-            popup_window.present()
-            popup_window.show_all()
-            
             Gimp.message("Harmonic Measure popup window opened successfully")
             logger.info("Harmonic Measure popup window opened successfully")
         else:
