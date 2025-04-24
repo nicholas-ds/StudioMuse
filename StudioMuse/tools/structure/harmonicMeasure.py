@@ -8,10 +8,8 @@ from gi.repository import Gimp, Gtk
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("harmonic_measure")
 
-# Import shared UI utilities
 from core.utils.ui import show_message, connect_signals, collect_widgets, get_widget_value
 
-# Import measurement models
 from core.models.measurement_models import Measurement
 
 class HarmonicMeasureUI:
@@ -37,26 +35,39 @@ class HarmonicMeasureUI:
         
         self.widgets = collect_widgets(builder, widget_ids)
         
-        # Initialize UI state
         self.init_ui()
         
-        # Connect event handlers
         self.connect_signals()
         
         logger.info("HarmonicMeasureUI initialized")
     
     def init_ui(self):
         """Initialize the UI state"""
-        # Hide new group entry by default
         self.widgets["newGroupEntry"].set_visible(False)
         
-        # Populate unit dropdown
+        # Populate units dropdown
         units = ["px", "cm", "in"]
         for unit in units:
             self.widgets["measurementUnitDropdown"].append_text(unit)
-        
-        # Set active unit
         self.widgets["measurementUnitDropdown"].set_active(0)
+        
+        # Populate groups dropdown
+        dropdown = self.widgets["groupDropdown"]
+        # Clear existing items
+        dropdown.remove_all()
+        
+        # Add default items
+        dropdown.append_text("-- Choose a Group -- ")
+        dropdown.append_text("++ Add New Group")
+        
+        # Get groups from proportia_ui if available
+        if self.proportia_ui and hasattr(self.proportia_ui, 'collection'):
+            groups = self.proportia_ui.collection.get_groups()
+            for group in groups:
+                dropdown.append_text(group)
+        
+        # Set active to first item
+        dropdown.set_active(0)
     
     def connect_signals(self):
         """Connect signal handlers"""
@@ -72,21 +83,17 @@ class HarmonicMeasureUI:
         """Handle group dropdown selection change"""
         selected = get_widget_value(combo)
         
-        # Toggle new group entry visibility
         self.widgets["newGroupEntry"].set_visible(selected == "++ Add New Group")
     
     def on_save_clicked(self, button):
         """Handle save button click"""
-        # Get basic values
         name = get_widget_value(self.widgets["measurementNameEntry"])
         value_text = get_widget_value(self.widgets["measurementValueLabel"])
         
-        # Validate name
         if not name:
             show_message("Please enter a measurement name", Gtk.MessageType.WARNING)
             return
         
-        # Parse value
         try:
             value_parts = value_text.split()
             value = float(value_parts[0])
@@ -95,14 +102,11 @@ class HarmonicMeasureUI:
             show_message("Invalid measurement value", Gtk.MessageType.ERROR)
             return
         
-        # Get group
         selected_group = get_widget_value(self.widgets["groupDropdown"])
         group = self.get_group_name(selected_group)
         
-        # Create measurement
         measurement = Measurement(name=name, value=value, group=group, unit=unit)
         
-        # Save measurement via proportia_ui
         if self.save_measurement(measurement):
             self.window.destroy()
     
@@ -124,17 +128,14 @@ class HarmonicMeasureUI:
             show_message(f"Measurement '{measurement.name}' created successfully", Gtk.MessageType.INFO)
             return True
         
-        # Add to collection
         self.proportia_ui.collection.add_measurement(measurement)
         
-        # Save to file
         file_path = self.proportia_ui.get_measurements_file_path()
         from core.utils.file_io import save_json_data
         
         if save_json_data(self.proportia_ui.collection.to_dict(), file_path, indent=2):
             show_message(f"Measurement '{measurement.name}' saved successfully", Gtk.MessageType.INFO)
             
-            # Refresh proportia UI
             if hasattr(self.proportia_ui, 'load_and_display_measurements'):
                 self.proportia_ui.load_and_display_measurements()
             
