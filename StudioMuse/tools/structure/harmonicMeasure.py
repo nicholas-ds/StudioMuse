@@ -25,7 +25,6 @@ class HarmonicMeasureUI:
         if self.parent_window and isinstance(self.parent_window, Gtk.Window):
             self.window.set_transient_for(self.parent_window)
             self.parent_window.hide()
-            # Connect window destroy signal
             self.window.connect("destroy", lambda w: self.parent_window.show())
         
         widget_ids = [
@@ -56,7 +55,6 @@ class HarmonicMeasureUI:
         dropdown = self.widgets["groupDropdown"]
         dropdown.remove_all()
         
-        # Add default items
         dropdown.append_text("-- Choose a Group -- ")
         dropdown.append_text("++ Add New Group")
         
