@@ -577,33 +577,16 @@ class ProportiaUI:
                 show_message("Failed to save changes", Gtk.MessageType.ERROR)
 
     def show_measurement_popup(self, measurement_value=0.0, unit="px", parent_widget=None):
-        """
-        Create and display the measurement popup window
-        
-        Args:
-            measurement_value: Initial measurement value to display
-            unit: Initial unit (px, cm, in)
-            parent_widget: Widget that triggered the popup
-            
-        Returns:
-            The popup window and builder objects for further interaction
-        """
+        """Create and display the measurement popup window"""
         try:
-            # Get parent window if applicable
-            parent_window = None
-            if parent_widget:
-                parent_window = parent_widget.get_toplevel()
-                if not isinstance(parent_window, Gtk.Window):
-                    parent_window = None
-            
             # Get path to dialog XML
             popup_path = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)), 
                 "../../ui/structure/proportiaPopup.xml"
             )
             
-            # Use the DialogBuilder to create the dialog
-            dialog, builder = DialogBuilder.create_from_file(popup_path, parent_window)
+            # Use DialogBuilder to create the dialog
+            dialog, builder = DialogBuilder.create_from_file(popup_path, parent_widget.get_toplevel() if parent_widget else None)
             
             if not dialog or not builder:
                 logger.error("Failed to create dialog")
@@ -612,11 +595,6 @@ class ProportiaUI:
             # Initialize the UI handler
             ui_handler = HarmonicMeasureUI(builder, dialog, parent_widget, self)
             
-            # Make sure dialog is properly displayed
-            dialog.set_keep_above(True)
-            dialog.present()
-            dialog.show_all()
-            
             # Set initial measurement value if provided
             try:
                 value_label = builder.get_object("measurementValueLabel")
@@ -624,6 +602,9 @@ class ProportiaUI:
                     value_label.set_text(f"{measurement_value:.2f} {unit}")
             except Exception as e:
                 logger.error(f"Error setting measurement value: {e}")
+            
+            # Show the dialog
+            DialogBuilder.show_dialog(dialog, builder)
             
             logger.info("Dialog shown successfully")
             return dialog, builder

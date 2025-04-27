@@ -290,8 +290,8 @@ class DialogBuilder:
             if configure_callback and callable(configure_callback):
                 configure_callback(dialog, builder)
             
-            # Display the dialog
-            dialog.show_all()
+            # Show the dialog but don't force all widgets visible
+            dialog.show()  # Use show() instead of show_all()
             return dialog
             
         except Exception as e:

@@ -2,13 +2,12 @@ import logging
 import gi
 gi.require_version('Gimp', '3.0')
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gimp, Gtk
+from gi.repository import Gimp, Gtk, GLib
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("harmonic_measure")
 
-from core.utils.ui import show_message, connect_signals, collect_widgets, get_widget_value
+from core.utils.ui import DialogBuilder, show_message, connect_signals, collect_widgets, get_widget_value
 
 from core.models.measurement_models import Measurement
 
@@ -22,7 +21,13 @@ class HarmonicMeasureUI:
         self.parent_widget = parent_widget
         self.proportia_ui = proportia_ui
         
-        # Collect essential widgets
+        self.parent_window = parent_widget.get_toplevel() if parent_widget else None
+        if self.parent_window and isinstance(self.parent_window, Gtk.Window):
+            self.window.set_transient_for(self.parent_window)
+            self.parent_window.hide()
+            # Connect window destroy signal
+            self.window.connect("destroy", lambda w: self.parent_window.show())
+        
         widget_ids = [
             "measurementNameEntry",
             "groupDropdown", 
@@ -36,37 +41,30 @@ class HarmonicMeasureUI:
         self.widgets = collect_widgets(builder, widget_ids)
         
         self.init_ui()
-        
         self.connect_signals()
         
         logger.info("HarmonicMeasureUI initialized")
     
     def init_ui(self):
         """Initialize the UI state"""
-        self.widgets["newGroupEntry"].set_visible(False)
-        
-        # Populate units dropdown
+
         units = ["px", "cm", "in"]
         for unit in units:
             self.widgets["measurementUnitDropdown"].append_text(unit)
         self.widgets["measurementUnitDropdown"].set_active(0)
         
-        # Populate groups dropdown
         dropdown = self.widgets["groupDropdown"]
-        # Clear existing items
         dropdown.remove_all()
         
         # Add default items
         dropdown.append_text("-- Choose a Group -- ")
         dropdown.append_text("++ Add New Group")
         
-        # Get groups from proportia_ui if available
-        if self.proportia_ui and hasattr(self.proportia_ui, 'collection'):
+        if self.proportia_ui:
             groups = self.proportia_ui.collection.get_groups()
             for group in groups:
                 dropdown.append_text(group)
         
-        # Set active to first item
         dropdown.set_active(0)
     
     def connect_signals(self):
@@ -82,7 +80,6 @@ class HarmonicMeasureUI:
     def on_group_dropdown_changed(self, combo):
         """Handle group dropdown selection change"""
         selected = get_widget_value(combo)
-        
         self.widgets["newGroupEntry"].set_visible(selected == "++ Add New Group")
     
     def on_save_clicked(self, button):
@@ -124,7 +121,7 @@ class HarmonicMeasureUI:
     
     def save_measurement(self, measurement):
         """Save the measurement via proportia_ui if available"""
-        if not self.proportia_ui or not hasattr(self.proportia_ui, 'collection'):
+        if not self.proportia_ui:
             show_message(f"Measurement '{measurement.name}' created successfully", Gtk.MessageType.INFO)
             return True
         
