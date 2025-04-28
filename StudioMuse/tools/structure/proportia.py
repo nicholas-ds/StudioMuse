@@ -1,17 +1,16 @@
 import logging
 from typing import Tuple, Optional, List, Dict, Any
 import os
+import json
 
 import gi
 gi.require_version('Gimp', '3.0')
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gimp, Gtk, GLib, Gdk
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("proportia")
 
-# Import our utility functions
 from core.utils.tools.structure.structure_utilities import (
     scale_by_sqrt2, 
     group_measurements,
@@ -19,7 +18,6 @@ from core.utils.tools.structure.structure_utilities import (
     apply_css_class
 )
 
-# Import new file I/O utilities
 from core.utils.file_io import (
     get_plugin_storage_path,
     save_json_data,
@@ -27,7 +25,6 @@ from core.utils.file_io import (
     normalize_measurement_data
 )
 
-# Import shared UI utilities
 from core.utils.ui import (
     connect_signals,
     collect_widgets,
@@ -39,14 +36,13 @@ from core.utils.ui import (
     DialogBuilder
 )
 
-# Import measurement models
 from core.models.measurement_models import Measurement, MeasurementCollection
 
-# Import validation utilities
 from core.utils.validation import validate_required_field, validate_numeric, validate_and_show_errors
 
-# Import harmonic measure mode
 from tools.structure.harmonicMeasure import HarmonicMeasureUI
+
+from core.setttings.settings_manager import SettingsManager
 
 class ProportiaCalculator:
     """Handles measurement calculations using √2 scaling"""
@@ -115,7 +111,6 @@ class ProportiaUI:
         self.calculator = ProportiaCalculator()
         self.builder = builder
         
-        # Use collect_widgets to get all UI elements
         widget_ids = [
             "unitDropdown",
             "measurementValueEntry",
@@ -180,6 +175,25 @@ class ProportiaUI:
         """Handle calculation button click or Enter key"""
         input_value = get_widget_value(self.widgets["measurementValueEntry"])
         
+        # Log current settings from SettingsManager
+        settings_manager = SettingsManager()
+        canvas_settings = settings_manager.canvas_settings
+        
+        # Create detailed settings message
+        if canvas_settings:
+            settings_msg = (
+                f"Canvas Settings:\n"
+                f"- Width: {canvas_settings.width}\n"
+                f"- Height: {canvas_settings.height}\n"
+                f"- Unit: {canvas_settings.unit.value}"
+            )
+        else:
+            settings_msg = "No canvas settings found - using default values"
+            
+        # Log to both logger and Gimp
+        logger.info(settings_msg)
+        Gimp.message(settings_msg)
+        
         if not input_value:
             self.widgets["generatedDimension"].set_text("Enter a value first")
             self.widgets["measurementValueEntry"].grab_focus()
@@ -189,14 +203,17 @@ class ProportiaUI:
         
         _, formatted_result = self.calculator.calculate_scaled_measurement(input_value, unit)
         
+        # Log the calculation
+        calc_msg = f"Calculating measurement: {input_value} {unit} -> {formatted_result}"
+        logger.info(calc_msg)
+        Gimp.message(calc_msg)
+        
         self.widgets["generatedDimension"].set_text(formatted_result)
 
     def get_measurements_file_path(self) -> str:
         """Get the path to the measurements file"""
-        # Match the actual installed path structure
         file_path = get_plugin_storage_path("data/tools/structure/saved_dimensions.json", "studiomuse")
         
-        # Add debugging output
         logger.info(f"Measurements file path: {file_path}")
         logger.info(f"File exists: {os.path.exists(file_path)}")
         
@@ -227,12 +244,10 @@ class ProportiaUI:
         file_path = self.get_measurements_file_path()
         raw_data = load_json_data(file_path, default=[])
         
-        # Convert to structured model
         self.collection = MeasurementCollection.from_dict(raw_data)
         self.current_measurements = self.collection.measurements
         
         if not self.current_measurements:
-            # Display message when no measurements are found
             label = Gtk.Label(label="No saved measurements found")
             label.set_halign(Gtk.Align.START)
             label.set_margin_top(10)
@@ -240,21 +255,17 @@ class ProportiaUI:
             self.widgets["measurementGroupBox"].add(label)
             return
         
-        # Get grouped measurements using the collection's method
         grouped_measurements = {}
         for group in self.collection.get_groups():
             grouped_measurements[group] = self.collection.get_measurements_by_group(group)
         
-        # Display each group
         for group_name, items in grouped_measurements.items():
             self.create_group_ui(group_name, items)
         
-        # Show all widgets
         self.widgets["measurementGroupBox"].show_all()
     
     def on_save_dimension_clicked(self, button):
         """Handle save dimension button click"""
-        # Get values
         name = get_widget_value(self.widgets["measurementNameEntry"])
         value_text = get_widget_value(self.widgets["generatedDimension"])
         
