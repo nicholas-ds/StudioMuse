@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -Command \"Test-Path \\\\$PROFILE; Get-Content \\\\$PROFILE -ErrorAction SilentlyContinue\")",
+      "Bash(powershell.exe -Command \"where.exe conda\")",
+      "Bash(powershell.exe -Command \"C:\\\\ProgramData\\\\miniforge3\\\\Scripts\\\\conda.exe --version\")",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:googleapis.github.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ]
+  }
+}

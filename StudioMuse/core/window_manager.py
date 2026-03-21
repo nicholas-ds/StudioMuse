@@ -80,22 +80,28 @@ class WindowManager:
                             elif category_id == "structure":
                                 Gimp.message("Attempting to connect structure signals")
                                 try:
-                                    # Try direct import first
-                                    Gimp.message("Trying direct import of ProportiaUI")
                                     from tools.structure.proportia import ProportiaUI
-                                    Gimp.message("Import successful")
                                     proportia_ui = ProportiaUI(notebook_builder)
                                     self.tool_handlers["structure"] = proportia_ui
                                     notebook_builder.connect_signals(proportia_ui)
-                                    Gimp.message("Successfully connected proportia signals")
                                 except ImportError as ie:
-                                    # Log the specific import error
                                     error_msg = f"Import error details: {str(ie)}"
                                     Gimp.message(error_msg)
-                                    print(error_msg)
-                                    
-                                    # Fall back to connecting signals to self
-                                    Gimp.message("Falling back to default signal handling for structure")
+                                    notebook_builder.connect_signals(self)
+                            elif category_id == "settings":
+                                try:
+                                    from core.setttings.settings_controller import SettingsController
+                                    from core.setttings.settings_manager import SettingsManager
+                                    settings_controller = SettingsController(
+                                        notebook_builder, 
+                                        SettingsManager()
+                                    )
+                                    self.tool_handlers["settings"] = settings_controller
+                                    notebook_builder.connect_signals(settings_controller)
+                                    Gimp.message("Settings controller initialized")
+                                except Exception as e:
+                                    error_msg = f"Error initializing settings controller: {str(e)}"
+                                    Gimp.message(error_msg)
                                     notebook_builder.connect_signals(self)
                             else:
                                 notebook_builder.connect_signals(self)

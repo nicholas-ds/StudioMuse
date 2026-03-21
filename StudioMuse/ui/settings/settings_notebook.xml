@@ -9,14 +9,160 @@
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
+        <property name="spacing">12</property>
+        <property name="margin">12</property>
+        
+        <!-- Title Section -->
         <child>
-          <placeholder/>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">center</property>
+            <property name="valign">start</property>
+            <property name="hexpand">True</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Canvas Settings</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                  <attribute name="scale" value="2"/>
+                </attributes>
+                <style>
+                  <class name="proportia-title"/>
+                </style>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="padding">5</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        
+        <!-- Canvas Settings Section -->
+        <child>
+          <object class="GtkFrame">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="label-xalign">0</property>
+            <property name="shadow-type">none</property>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="margin-start">8</property>
+                <property name="margin-end">8</property>
+                <property name="margin-top">8</property>
+                <property name="margin-bottom">5</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">10</property>
+                
+                <!-- Width Setting -->
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="spacing">10</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label">Width:</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="canvasPhysicalWidth">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="input-purpose">number</property>
+                        <property name="placeholder-text">Enter width</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                
+                <!-- Height Setting -->
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="spacing">10</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label">Height:</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="canvasPhysicalHeight">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="input-purpose">number</property>
+                        <property name="placeholder-text">Enter height</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                
+                <!-- Unit Setting -->
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="spacing">10</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label">Unit:</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkComboBoxText" id="canvasPhysicalUnit">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <items>
+                          <item>cm</item>
+                          <item>inches</item>
+                        </items>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label">📏 Physical Canvas Settings</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+                <style>
+                  <class name="frame-title"/>
+                </style>
+              </object>
+            </child>
+            <style>
+              <class name="measurement-frame"/>
+            </style>
+          </object>
         </child>
       </object>
     </child>
     <child type="tab">
       <object class="GtkLabel">
         <property name="visible">True</property>
+        <property name="can-focus">False</property>
         <property name="label">Settings</property>
       </object>
     </child>

@@ -15,9 +15,9 @@ class GeminiLLM(BaseLLM):
 
     def __init__(self, 
                  temperature: float = 1.0, 
-                 model: str = "gemini-2.0-flash", 
+                 model: str = "gemini-3.1-pro-preview",
                  api_key: Optional[str] = None,
-                 max_output_tokens: int = 2048):
+                 max_output_tokens: int = 8192):
         """
         Initialize the Gemini LLM client.
         
