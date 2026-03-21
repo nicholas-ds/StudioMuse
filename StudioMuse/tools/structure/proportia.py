@@ -8,8 +8,10 @@ gi.require_version('Gimp', '3.0')
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gimp, Gtk, GLib, Gdk
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("proportia")
+from core.utils.logging import log_info, log_error, log_warning, log_debug, setup_studio_logger
+
+# Replace basic logging setup with StudioMuse logger
+logger = setup_studio_logger("proportia")
 
 from core.utils.tools.structure.structure_utilities import (
     scale_by_sqrt2, 
@@ -150,7 +152,7 @@ class ProportiaUI:
     
     def verify_entry_visibility(self):
         """Force verify the entry visibility after UI is loaded"""
-        print("Verifying entry visibility...")
+        log_debug("Verifying entry visibility...")
         self.widgets["newGroupName"].set_visible(False)
         self.widgets["newGroupName"].hide()
         return False  
@@ -158,7 +160,7 @@ class ProportiaUI:
     def on_group_dropdown_changed(self, combo):
         """Handle dropdown changes"""
         selected = get_widget_value(combo)
-        print(f"Dropdown changed to: '{selected}'")
+        log_debug(f"Dropdown changed to: '{selected}'")
         
         if selected == "+ New Group":
             self.widgets["newGroupName"].set_visible(True)
@@ -191,8 +193,7 @@ class ProportiaUI:
             settings_msg = "No canvas settings found - using default values"
             
         # Log to both logger and Gimp
-        logger.info(settings_msg)
-        Gimp.message(settings_msg)
+        log_info(settings_msg)
         
         if not input_value:
             self.widgets["generatedDimension"].set_text("Enter a value first")
@@ -205,8 +206,7 @@ class ProportiaUI:
         
         # Log the calculation
         calc_msg = f"Calculating measurement: {input_value} {unit} -> {formatted_result}"
-        logger.info(calc_msg)
-        Gimp.message(calc_msg)
+        log_info(calc_msg)
         
         self.widgets["generatedDimension"].set_text(formatted_result)
 
@@ -214,8 +214,8 @@ class ProportiaUI:
         """Get the path to the measurements file"""
         file_path = get_plugin_storage_path("data/tools/structure/saved_dimensions.json", "studiomuse")
         
-        logger.info(f"Measurements file path: {file_path}")
-        logger.info(f"File exists: {os.path.exists(file_path)}")
+        log_debug(f"Measurements file path: {file_path}")
+        log_debug(f"File exists: {os.path.exists(file_path)}")
         
         return file_path
     
@@ -284,6 +284,7 @@ class ProportiaUI:
         )
         
         if not is_valid:
+            log_warning(error_message)
             show_message(error_message, Gtk.MessageType.WARNING)
             return
         
@@ -306,7 +307,9 @@ class ProportiaUI:
         # Save to file
         file_path = self.get_measurements_file_path()
         if save_json_data(self.collection.to_dict(), file_path, indent=2):
-            show_message(f"Measurement '{name}' saved successfully", Gtk.MessageType.INFO)
+            success_msg = f"Measurement '{name}' saved successfully"
+            log_info(success_msg)
+            show_message(success_msg, Gtk.MessageType.INFO)
             
             self.widgets["measurementNameEntry"].set_text("")
             self.widgets["measurementValueEntry"].set_text("")
@@ -315,7 +318,9 @@ class ProportiaUI:
             self.load_and_display_measurements()
             self.populate_group_dropdown()
         else:
-            show_message("Failed to save measurement", Gtk.MessageType.ERROR)
+            error_msg = "Failed to save measurement"
+            log_error(error_msg)
+            show_message(error_msg, Gtk.MessageType.ERROR)
     
     def get_selected_group(self) -> str:
         """Get the selected group or create a new one"""
@@ -480,7 +485,7 @@ class ProportiaUI:
             file_path = self.get_measurements_file_path()
             if save_json_data(self.collection.to_dict(), file_path, indent=2):
                 self.load_and_display_measurements()
-                logger.info(f"Renamed measurement from '{old_name}' to '{new_name}'")
+                log_info(f"Renamed measurement from '{old_name}' to '{new_name}'")
             else:
                 show_message("Failed to save changes", Gtk.MessageType.ERROR)
         else:
@@ -549,19 +554,16 @@ class ProportiaUI:
 
     def on_start_measuring_clicked(self, button):
         """Handle start measuring button click"""
-        logger.info("Harmonic Measure button clicked!")
-        Gimp.message("Harmonic Measure button clicked!")
+        log_info("Starting Harmonic Measure tool")
         
         popup_window, builder = self.show_measurement_popup(parent_widget=button)
         
         if popup_window:
-            Gimp.message("Harmonic Measure popup window opened successfully")
-            logger.info("Harmonic Measure popup window opened successfully")
+            log_info("Harmonic Measure popup window opened successfully")
         else:
-            Gimp.message("Failed to open the measurement popup window")
-            logger.error("Failed to open the measurement popup window")
+            log_error("Failed to open the measurement popup window")
 
     def cleanup(self):
         """Clean up resources when the plugin is unloaded"""
         cleanup_resources(self)
-        logger.info("ProportiaUI resources cleaned up")
+        log_info("ProportiaUI resources cleaned up", user_visible=False)

@@ -83,7 +83,7 @@ class BackendAPIClient:
             }
 
             logger.info("Sending palette demystification request")
-            api_result = self._make_request("palette/demystify", method="POST", data=payload)
+            api_result = self._make_request("palette/demystify", method="POST", data=payload, timeout=120)
             
             # Return in the original format expected by the rest of the code
             if api_result["success"]:
